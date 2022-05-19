@@ -1,12 +1,12 @@
 import bcrypt
 
-from db import db
+from db import db, st
 from flask import request
 from flask_cors import CORS
 from flask import Flask, jsonify
 
-# login
-@api.route('/login', methods = ['POST'])
+# login applicant
+@api.route('/loginApp', methods = ['POST'])
 def login():
 	param = request.get_json(force = True)
 	userid = param.get('userid')
@@ -22,8 +22,13 @@ def login():
 	else:
 		return {'res': False, 'msg': 'Username Not Registered'}
 
-# signup
-@api.route('/login', methods = ['POST'])
+# signup applicant
+@api.route('/loginApp', methods = ['POST'])
 def signup():
 	param = request.get_json(force = True)
 	# todo
+
+# update applicant
+@api.route('/updateApp', methods = ['POST'])
+def update():
+	param = request.get_json(force = True)
