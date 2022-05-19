@@ -17,3 +17,4 @@ firebaseConfig = {
 firebase = pyrebase.initialize_app(firebaseConfig)
 
 db = firebase.database()
+st = firebase.storage()
