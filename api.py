@@ -99,7 +99,6 @@ def updateApp():
 	userid = data.pop('userid')
 	token = data.pop('token')
 
-	# data['resume'] = 'resumes/' + filename
 	# st.child(data['resume']).put(os.path.join(UPLOAD_FOLDER, filename))
 
 	if db.child('applicants').child(userid).get().val():
@@ -108,8 +107,7 @@ def updateApp():
 		elif time.time() > db.child('applicants').child(userid).child('login').child('expiration').get().val():
 			return {'res': 3, 'msg': 'Session Expired'}
 		else:
-			db.child('applicants').child(userid).update(data)
-
+			data['resume'] = False
 			if 'resume' in request.files:
 				file = request.files['resume']
 				extension = file.filename.split('.')[-1]
@@ -121,6 +119,10 @@ def updateApp():
 					return {'res': 5, 'msg': 'Unsupported Resume Format'}
 				else:
 					file.save(os.path.join(UPLOAD_FOLDER, filename))
+					data['resume'] = True
+
+			db.child('applicants').child(userid).update(data)
+
 			return {'res': 0, 'msg': 'Successful'}
 	else:
 		return {'res': 1, 'msg': 'User Not Registered'}
