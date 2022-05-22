@@ -40,7 +40,7 @@ def loginApp():
 		else:
 			return {'res': 2, 'msg': 'Wrong Password'}
 	else:
-		return {'res': 1, 'msg': 'Username Not Registered'}
+		return {'res': 1, 'msg': 'Username Not Registrated'}
 
 # signup applicant
 @api.route('/signupApp', methods = ['POST'])
@@ -85,8 +85,8 @@ def updateApp():
 		'degree': data.pop('degree', None)
 	}
 	data['experience'] = {
-		'yearsExp': data.pop('yearsExp', None),
-		'numsEmp': data.pop('numsEmp', None)
+		'yearsExp': int(data.pop('yearsExp', None)),
+		'numsEmp': int(data.pop('numsEmp', None))
 	}
 	data['externalLinks'] = {
 		'LinkedIn': data.pop('LinkedIn', None),
@@ -94,21 +94,10 @@ def updateApp():
 		'GoogleScholar': data.pop('GoogleScholar', None),
 		'personalWebsite': data.pop('personalWebsite', None)
 	}
+	data['applications'] = []
 	
-	userid = data['userid']
+	userid = data.pop('userid')
 	token = data.pop('token')
-
-	if 'resume' in request.files:
-		file = request.files['resume']
-		extension = file.filename.split('.')[-1]
-		filename = 'resume_'+userid+'.'+extension
-
-		if not file or file.filename == '':
-			return {'res': 4, 'msg': 'No Resume Uploaded'}
-		elif extension not in ALLOWED_FORMATS:
-			return {'res': 5, 'msg': 'Unsupported Resume Format'}
-		else:
-			file.save(os.path.join(UPLOAD_FOLDER, filename))
 
 	# data['resume'] = 'resumes/' + filename
 	# st.child(data['resume']).put(os.path.join(UPLOAD_FOLDER, filename))
@@ -120,6 +109,18 @@ def updateApp():
 			return {'res': 3, 'msg': 'Session Expired'}
 		else:
 			db.child('applicants').child(userid).update(data)
+
+			if 'resume' in request.files:
+				file = request.files['resume']
+				extension = file.filename.split('.')[-1]
+				filename = 'resume_'+userid+'.'+extension
+
+				if not file or file.filename == '':
+					return {'res': 4, 'msg': 'No Resume Uploaded'}
+				elif extension not in ALLOWED_FORMATS:
+					return {'res': 5, 'msg': 'Unsupported Resume Format'}
+				else:
+					file.save(os.path.join(UPLOAD_FOLDER, filename))
 			return {'res': 0, 'msg': 'Successful'}
 	else:
 		return {'res': 1, 'msg': 'User Not Registered'}
