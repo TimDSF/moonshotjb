@@ -6,13 +6,74 @@
         </title>
     </head>
     <body>
+        <b>
+            loginApp
+        </b>
+        <form action = "http://127.0.0.1:5000/loginApp" method="post">
+            <label for="userid">userid:</label>
+            <input type="text" name="userid"><br><br>
+            <label for="passwd">passwd:</label>
+            <input type="password" name="passwd"><br><br>
+            <input type="submit" value="Submit">
+        </form>
+        <br>
+        
+        <b>
+            signupApp
+        </b>
+        <form action = "http://127.0.0.1:5000/signupApp" method="post">
+            <label for="userid">userid:</label>
+            <input type="text" name="userid"><br><br>
+            <label for="passwd">passwd:</label>
+            <input type="password" name="passwd"><br><br>
+            <input type="submit" value="Submit">
+        </form>
+        <br>
+        
+        <b>
+            updateApp
+        </b>
+        <form action = "http://127.0.0.1:5000/updateApp" method="post" enctype="multipart/form-data">
+            <label for="userid">userid:</label>
+            <input type="text" name="userid"><br><br>
+            <label for="token">token:</label>
+            <input type="text" name="token"><br><br>
+            <label for="name">name:</label>
+            <input type="text" name="name"><br><br>
+            <label for="number">number:</label>
+            <input type="text" name="number"><br><br>
+            <label for="wxid">wxid:</label>
+            <input type="text" name="wxid"><br><br>
+            <label for="email">email:</label>
+            <input type="text" name="email"><br><br>
+            <label for="college">college:</label>
+            <input type="text" name="college"><br><br>
+            <label for="degree">degree:</label>
+            <input type="text" name="degree"><br><br>
+            <label for="yearsExp">yearsExp:</label>
+            <input type="text" name="yearsExp"><br><br>
+            <label for="numsEmp">numsEmp:</label>
+            <input type="text" name="numsEmp"><br><br>
+            <label for="workAuth">workAuth:</label>
+            <input type="text" name="workAuth"><br><br>
+            <label for="LinkedIn">LinkedIn:</label>
+            <input type="text" name="LinkedIn"><br><br>
+            <label for="GitHub">GitHub:</label>
+            <input type="text" name="GitHub"><br><br>
+            <label for="GoogleScholar">GoogleScholar:</label>
+            <input type="text" name="GoogleScholar"><br><br>
+            <label for="personalWebsite">personalWebsite:</label>
+            <input type="text" name="personalWebsite"><br><br>
 
-    <form action = "http://127.0.0.1:5000/signupApp" method="post">
-        <label for="userid">user id:</label>
-        <input type="text" id="userid" name="userid"><br><br>
-        <label for="passwd">pwd:</label>
-        <input type="password" id="passwd" name="passwd"><br><br>
-        <input type="submit" value="Submit">
-    </form>
+            <label for="tag">tag1:</label>
+            <input type="text" name="tag[]"><br><br>
+            <label for="tag">tag2:</label>
+            <input type="text" name="tag[]"><br><br>
+
+            <label for="resume">resume:</label>
+            <input type="file" name="resume"><br><br>
+            <input type="submit" value="Submit">
+        </form>
+        <br>
     </body>
 </html>
