@@ -9,7 +9,7 @@
         <b>
             loginApp
         </b>
-        <form action = "http://127.0.0.1:5000/loginApp" method="post">
+        <form action = "http://127.0.0.1:5000/loginRec" method="post">
             <label for="userid">userid:</label>
             <input type="text" name="userid"><br><br>
             <label for="passwd">passwd:</label>
@@ -21,7 +21,7 @@
         <b>
             signupApp
         </b>
-        <form action = "http://127.0.0.1:5000/signupApp" method="post">
+        <form action = "http://127.0.0.1:5000/signupRec" method="post">
             <label for="userid">userid:</label>
             <input type="text" name="userid"><br><br>
             <label for="passwd">passwd:</label>
@@ -72,6 +72,33 @@
 
             <label for="resume">resume:</label>
             <input type="file" name="resume"><br><br>
+            <input type="submit" value="Submit">
+        </form>
+        <br>
+        <b>
+            updateRec
+        </b>
+        <form action = "http://127.0.0.1:5000/updateRec" method="post" enctype="multipart/form-data">
+            <label for="userid">userid:</label>
+            <input type="text" name="userid"><br><br>
+            <label for="token">token:</label>
+            <input type="text" name="token"><br><br>
+            <label for="name">name:</label>
+            <input type="text" name="name"><br><br>
+            <label for="phone">phone:</label>
+            <input type="text" name="phone"><br><br>
+            <label for="email">email:</label>
+            <input type="text" name="email"><br><br>
+            <label for="logourl">logourl:</label>
+            <input type="text" name="logourl"><br><br>
+            <label for="url">url:</label>
+            <input type="text" name="url"><br><br>
+            <label for=" description"> description:</label>
+            <input type="text" name=" description"><br><br>
+            <label for="background">background:</label>
+            <input type="text" name="background"><br><br>
+            <label for="financing">financing:</label>
+            <input type="text" name="financing"><br><br>
             <input type="submit" value="Submit">
         </form>
         <br>

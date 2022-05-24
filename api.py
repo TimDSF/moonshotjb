@@ -64,6 +64,21 @@ def signupApp():
 			}
 		db.child('applicants').child(userid).set(data)
 		return {'res': 0, 'msg': 'Successful', 'token': token}
+
+# signup guest
+@api.route('/signupGuest', methods = ['POST'])
+def signupGuest():
+	userid = request.form.get('userid')
+	
+	if db.child('applicants').child(userid).get().val():
+		return {'res': 1, 'msg': 'User ID Occupied'}
+	else:
+		
+		data = {
+				'guest': True
+			}
+		db.child('applicants').child(userid).set(data)
+		return {'res': 0, 'msg': 'Successful'}
 	
 # update applicant
 # note: in order to have the file uploaded successfully, the html form needs to have encryption of enctype="multipart/form-data"
@@ -99,6 +114,7 @@ def updateApp():
 	userid = data.pop('userid')
 	token = data.pop('token')
 
+	# data['resume'] = 'resumes/' + filename
 	# st.child(data['resume']).put(os.path.join(UPLOAD_FOLDER, filename))
 
 	if db.child('applicants').child(userid).get().val():
@@ -107,7 +123,8 @@ def updateApp():
 		elif time.time() > db.child('applicants').child(userid).child('login').child('expiration').get().val():
 			return {'res': 3, 'msg': 'Session Expired'}
 		else:
-			data['resume'] = False
+			db.child('applicants').child(userid).update(data)
+
 			if 'resume' in request.files:
 				file = request.files['resume']
 				extension = file.filename.split('.')[-1]
@@ -119,11 +136,93 @@ def updateApp():
 					return {'res': 5, 'msg': 'Unsupported Resume Format'}
 				else:
 					file.save(os.path.join(UPLOAD_FOLDER, filename))
-					data['resume'] = True
-
-			db.child('applicants').child(userid).update(data)
-
 			return {'res': 0, 'msg': 'Successful'}
 	else:
 		return {'res': 1, 'msg': 'User Not Registered'}
 
+
+
+
+#####################################################
+# login recruiter
+@api.route('/loginRec', methods = ['POST'])
+def loginRec():
+	userid = request.form.get('userid')
+	passwd = request.form.get('passwd').encode('utf-8')
+
+	recruiters = db.child('recruiters').child(userid).get().val()
+
+	if recruiters:
+		if bcrypt.checkpw(passwd, recruiters['hashpw'].encode('utf-8')):
+			token = ''.join(random.choices(string.ascii_uppercase + string.digits, k = 256))
+			data = {
+				'login': {
+					'token': token,
+					'expiration': time.time() + 86400
+				}
+			}
+			db.child('recruiters').child(userid).set(data)
+			return {'res': 0, 'msg': 'Successful'}
+		else:
+			return {'res': 2, 'msg': 'Wrong Password'}
+	else:
+		return {'res': 1, 'msg': 'Username Not Registrated'}
+
+# signup recruiter
+@api.route('/signupRec', methods = ['POST'])
+def signupRec():
+	userid = request.form.get('userid')
+	passwd = request.form.get('passwd').encode('utf-8')
+	
+	if db.child('recruiters').child(userid).get().val():
+		return {'res': 1, 'msg': 'User ID Occupied'}
+	else:
+		hashpw = bcrypt.hashpw(passwd, bcrypt.gensalt()).decode('utf-8')
+		token = ''.join(random.choices(string.ascii_uppercase + string.digits, k = 256))
+		print(hashpw, token)
+		data = {
+				'hashpw': hashpw,
+				'login': {
+					'token': token,
+					'expiration': time.time() + 86400
+				}
+			}
+		db.child('recruiters').child(userid).set(data)
+		return {'res': 0, 'msg': 'Successful', 'token': token}
+
+# update recruiter
+# note: in order to have the file uploaded successfully, the html form needs to have encryption of enctype="multipart/form-data"
+@api.route('/updateRec', methods = ['POST'])
+def updateRec():
+	data = request.form.to_dict()
+
+	data['contacts'] = {
+		'name': data.pop('name', None),
+		'phone': data.pop('phone', None),
+		'email': data.pop('email', None)
+	}
+	
+	
+	data['companyDescription'] = {
+		'description': data.pop('description', None),
+		'background': data.pop('background', None),
+		'financing': data.pop('financing', None),
+		
+	}
+	data['JDs'] = []
+	data['verified'] = False
+	userid = data.pop('userid')
+	token = data.pop('token')
+
+
+	if db.child('recruiters').child(userid).get().val():
+		if token != db.child('recruiters').child(userid).child('login').child('token').get().val():
+			return {'res': 2, 'msg': 'Mismatch Token'}
+		elif time.time() > db.child('recruiters').child(userid).child('login').child('expiration').get().val():
+			return {'res': 3, 'msg': 'Session Expired'}
+		else:
+			db.child('recruiters').child(userid).update(data)
+			return {'res': 0, 'msg': 'Successful'}
+	else:
+		return {'res': 1, 'msg': 'User Not Registered'}
+#########################################################
