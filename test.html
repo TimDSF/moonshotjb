@@ -7,9 +7,23 @@
     </head>
     <body>
         <b>
+            readApp
+        </b>
+        <form action = "http://127.0.0.1:5000/readApp" method="post">
+            <label for="userid">userid:</label>
+            <input type="text" name="userid"><br><br>
+            <label for="token">token:</label>
+            <input type="token" name="token"><br><br>
+            <label for="targetid">targetid:</label>
+            <input type="targetid" name="targetid"><br><br>
+            <input type="submit" value="Submit">
+        </form>
+        <br>
+
+        <b>
             loginApp
         </b>
-        <form action = "http://127.0.0.1:5000/loginRec" method="post">
+        <form action = "http://127.0.0.1:5000/loginApp" method="post">
             <label for="userid">userid:</label>
             <input type="text" name="userid"><br><br>
             <label for="passwd">passwd:</label>
@@ -21,7 +35,7 @@
         <b>
             signupApp
         </b>
-        <form action = "http://127.0.0.1:5000/signupRec" method="post">
+        <form action = "http://127.0.0.1:5000/signupApp" method="post">
             <label for="userid">userid:</label>
             <input type="text" name="userid"><br><br>
             <label for="passwd">passwd:</label>

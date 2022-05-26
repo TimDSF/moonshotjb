@@ -35,7 +35,7 @@ def loginApp():
 					'expiration': time.time() + 86400
 				}
 			}
-			db.child('applicants').child(userid).set(data)
+			db.child('applicants').child(userid).update(data)
 			return {'res': 0, 'msg': 'Successful'}
 		else:
 			return {'res': 2, 'msg': 'Wrong Password'}
@@ -156,12 +156,14 @@ def loginRec():
 		if bcrypt.checkpw(passwd, recruiters['hashpw'].encode('utf-8')):
 			token = ''.join(random.choices(string.ascii_uppercase + string.digits, k = 256))
 			data = {
+				
 				'login': {
 					'token': token,
 					'expiration': time.time() + 86400
 				}
+
 			}
-			db.child('recruiters').child(userid).set(data)
+			db.child('recruiters').child(userid).update(data)
 			return {'res': 0, 'msg': 'Successful'}
 		else:
 			return {'res': 2, 'msg': 'Wrong Password'}
@@ -186,7 +188,7 @@ def signupRec():
 					'token': token,
 					'expiration': time.time() + 86400
 				}
-			}
+		}
 		db.child('recruiters').child(userid).set(data)
 		return {'res': 0, 'msg': 'Successful', 'token': token}
 
@@ -226,3 +228,27 @@ def updateRec():
 	else:
 		return {'res': 1, 'msg': 'User Not Registered'}
 #########################################################
+
+# readApp (not full version)
+@api.route('/readApp', methods = ['POST'])
+def readApp():
+	data = request.form.to_dict()
+	userid = data.pop('userid')
+	token = data.pop('token')
+	targetid = data.pop('targetid')
+
+	if db.child('applicants').child(userid).get().val():
+		if token != db.child('applicants').child(userid).child('login').child('token').get().val():
+			return {'res': 2, 'msg': 'Mismatch Token'}
+		elif time.time() > db.child('applicants').child(userid).child('login').child('expiration').get().val():
+			return {'res': 3, 'msg': 'Session Expired'}
+		else:
+			applicant = {
+				'name': db.child('applicants').child(targetid).child('name').get().val(),
+				'contacts': db.child('applicants').child(targetid).child('contacts').get().val(),
+	
+
+			}
+			return {'res': 0, 'msg': 'Successful', 'applicant': applicant}
+	else:
+		return {'res': 1, 'msg': 'User Not Registered'}
