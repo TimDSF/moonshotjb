@@ -18,6 +18,11 @@ api.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 api.config['MAX_CONTENT_PATH'] = MAX_SIZE
 # CORS(api)
 
+# text
+@api.route('/test', methods = ['GET'])
+def test():
+    return 'successful'
+
 # login applicant
 @api.route('/loginApp', methods = ['POST'])
 def loginApp():
