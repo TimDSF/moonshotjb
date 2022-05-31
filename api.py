@@ -18,7 +18,7 @@ api.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 api.config['MAX_CONTENT_PATH'] = MAX_SIZE
 # CORS(api)
 
-# text
+# test
 @api.route('/test', methods = ['GET'])
 def test():
     return 'successful'
@@ -41,7 +41,7 @@ def loginApp():
 				}
 			}
 			db.child('applicants').child(userid).update(data)
-			return {'res': 0, 'msg': 'Successful'}
+			return {'res': 0, 'msg': 'Successful', 'token': token}
 		else:
 			return {'res': 2, 'msg': 'Wrong Password'}
 	else:
@@ -145,10 +145,6 @@ def updateApp():
 	else:
 		return {'res': 1, 'msg': 'User Not Registered'}
 
-
-
-
-#####################################################
 # login recruiter
 @api.route('/loginRec', methods = ['POST'])
 def loginRec():
@@ -161,15 +157,13 @@ def loginRec():
 		if bcrypt.checkpw(passwd, recruiters['hashpw'].encode('utf-8')):
 			token = ''.join(random.choices(string.ascii_uppercase + string.digits, k = 256))
 			data = {
-				
 				'login': {
 					'token': token,
 					'expiration': time.time() + 86400
 				}
-
 			}
 			db.child('recruiters').child(userid).update(data)
-			return {'res': 0, 'msg': 'Successful'}
+			return {'res': 0, 'msg': 'Successful', 'token': token}
 		else:
 			return {'res': 2, 'msg': 'Wrong Password'}
 	else:
@@ -214,13 +208,11 @@ def updateRec():
 		'description': data.pop('description', None),
 		'background': data.pop('background', None),
 		'financing': data.pop('financing', None),
-		
 	}
 	data['JDs'] = []
 	data['verified'] = False
 	userid = data.pop('userid')
 	token = data.pop('token')
-
 
 	if db.child('recruiters').child(userid).get().val():
 		if token != db.child('recruiters').child(userid).child('login').child('token').get().val():
@@ -232,9 +224,8 @@ def updateRec():
 			return {'res': 0, 'msg': 'Successful'}
 	else:
 		return {'res': 1, 'msg': 'User Not Registered'}
-#########################################################
 
-# readApp (not full version)
+# readApp (todo)
 @api.route('/readApp', methods = ['POST'])
 def readApp():
 	data = request.form.to_dict()
@@ -248,12 +239,11 @@ def readApp():
 		elif time.time() > db.child('applicants').child(userid).child('login').child('expiration').get().val():
 			return {'res': 3, 'msg': 'Session Expired'}
 		else:
-			applicant = {
-				'name': db.child('applicants').child(targetid).child('name').get().val(),
-				'contacts': db.child('applicants').child(targetid).child('contacts').get().val(),
-	
-
-			}
+			applicant = db.child('applicants').child(targetid).get().val()
+			applicant.pop('login')
+			applicant.pop('hashpw')
+			applicant.pop('resume')
+			print(applicant)
 			return {'res': 0, 'msg': 'Successful', 'applicant': applicant}
 	else:
 		return {'res': 1, 'msg': 'User Not Registered'}
