@@ -33,9 +33,31 @@
         <br>
         
         <b>
+            loginRec
+        </b>
+        <form action = "http://127.0.0.1:5000/loginRec" method="post">
+            <label for="userid">userid:</label>
+            <input type="text" name="userid"><br><br>
+            <label for="passwd">passwd:</label>
+            <input type="password" name="passwd"><br><br>
+            <input type="submit" value="Submit">
+        </form>
+        <br>
+        <b>
             signupApp
         </b>
         <form action = "http://127.0.0.1:5000/signupApp" method="post">
+            <label for="userid">userid:</label>
+            <input type="text" name="userid"><br><br>
+            <label for="passwd">passwd:</label>
+            <input type="password" name="passwd"><br><br>
+            <input type="submit" value="Submit">
+        </form>
+        <br>
+        <b>
+            signupRec
+        </b>
+        <form action = "http://127.0.0.1:5000/signupRec" method="post">
             <label for="userid">userid:</label>
             <input type="text" name="userid"><br><br>
             <label for="passwd">passwd:</label>
@@ -121,6 +143,19 @@
             readApp
         </b>
         <form action = "http://127.0.0.1:5000/readApp" method="post" enctype="multipart/form-data">
+            <label for="userid">userid:</label>
+            <input type="text" name="userid"><br><br>
+            <label for="token">token:</label>
+            <input type="text" name="token"><br><br>
+            <label for="targetid">targetid:</label>
+            <input type="text" name="targetid"><br><br>
+            <input type="submit" value="Submit">
+        </form>
+        <br>
+        <b>
+            readRec
+        </b>
+        <form action = "http://127.0.0.1:5000/readRec" method="post" enctype="multipart/form-data">
             <label for="userid">userid:</label>
             <input type="text" name="userid"><br><br>
             <label for="token">token:</label>

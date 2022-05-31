@@ -225,7 +225,7 @@ def updateRec():
 	else:
 		return {'res': 1, 'msg': 'User Not Registered'}
 
-# readApp (todo)
+# readApp 
 @api.route('/readApp', methods = ['POST'])
 def readApp():
 	data = request.form.to_dict()
@@ -243,7 +243,60 @@ def readApp():
 			applicant.pop('login')
 			applicant.pop('hashpw')
 			applicant.pop('resume')
+			applicant.pop('guest')
 			print(applicant)
 			return {'res': 0, 'msg': 'Successful', 'applicant': applicant}
+
+	elif db.child('recruiters').child(userid).get().val():
+		if token != db.child('recruiters').child(userid).child('login').child('token').get().val():
+			return {'res': 2, 'msg': 'Mismatch Token'}
+		elif time.time() > db.child('recruiters').child(userid).child('login').child('expiration').get().val():
+			return {'res': 3, 'msg': 'Session Expired'}
+		else:
+			applicant = db.child('applicants').child(targetid).get().val()
+			applicant.pop('login')
+			applicant.pop('hashpw')
+			applicant.pop('resume')
+			applicant.pop('guest')
+			print(applicant)
+			return {'res': 0, 'msg': 'Successful', 'applicant': applicant}
+
+	else:
+		return {'res': 1, 'msg': 'User Not Registered'}
+
+
+# readRec 
+@api.route('/readRec', methods = ['POST'])
+def readRec():
+	data = request.form.to_dict()
+	userid = data.pop('userid')
+	token = data.pop('token')
+	targetid = data.pop('targetid')
+
+	if db.child('applicants').child(userid).get().val():
+		if token != db.child('applicants').child(userid).child('login').child('token').get().val():
+			return {'res': 2, 'msg': 'Mismatch Token'}
+		elif time.time() > db.child('applicants').child(userid).child('login').child('expiration').get().val():
+			return {'res': 3, 'msg': 'Session Expired'}
+		else:
+			recruiter = db.child('recruiters').child(targetid).get().val()
+			recruiter.pop('login')
+			recruiter.pop('hashpw')
+			recruiter.pop('verified')
+			print(recruiter)
+			return {'res': 0, 'msg': 'Successful', 'recruiter': recruiter}
+
+	elif db.child('recruiters').child(userid).get().val():
+		if token != db.child('recruiters').child(userid).child('login').child('token').get().val():
+			return {'res': 2, 'msg': 'Mismatch Token'}
+		elif time.time() > db.child('recruiters').child(userid).child('login').child('expiration').get().val():
+			return {'res': 3, 'msg': 'Session Expired'}
+		else:
+			recruiter = db.child('recruiters').child(targetid).get().val()
+			recruiter.pop('login')
+			recruiter.pop('hashpw')
+			recruiter.pop('verified')
+			print(recruiter)
+			return {'res': 0, 'msg': 'Successful', 'recruiter': recruiter}
 	else:
 		return {'res': 1, 'msg': 'User Not Registered'}
