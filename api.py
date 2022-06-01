@@ -119,7 +119,6 @@ def updateApp():
 	userid = data.pop('userid')
 	token = data.pop('token')
 
-	# data['resume'] = 'resumes/' + filename
 	# st.child(data['resume']).put(os.path.join(UPLOAD_FOLDER, filename))
 
 	if db.child('applicants').child(userid).get().val():
@@ -128,8 +127,6 @@ def updateApp():
 		elif time.time() > db.child('applicants').child(userid).child('login').child('expiration').get().val():
 			return {'res': 3, 'msg': 'Session Expired'}
 		else:
-			db.child('applicants').child(userid).update(data)
-
 			if 'resume' in request.files:
 				file = request.files['resume']
 				extension = file.filename.split('.')[-1]
@@ -140,7 +137,11 @@ def updateApp():
 				elif extension not in ALLOWED_FORMATS:
 					return {'res': 5, 'msg': 'Unsupported Resume Format'}
 				else:
+					data['resume'] = True
 					file.save(os.path.join(UPLOAD_FOLDER, filename))
+			
+			db.child('applicants').child(userid).update(data)
+		
 			return {'res': 0, 'msg': 'Successful'}
 	else:
 		return {'res': 1, 'msg': 'User Not Registered'}
@@ -203,7 +204,6 @@ def updateRec():
 		'email': data.pop('email', None)
 	}
 	
-	
 	data['companyDescription'] = {
 		'description': data.pop('description', None),
 		'background': data.pop('background', None),
@@ -234,36 +234,36 @@ def readApp():
 	targetid = data.pop('targetid')
 
 	if db.child('applicants').child(userid).get().val():
-		if token != db.child('applicants').child(userid).child('login').child('token').get().val():
-			return {'res': 2, 'msg': 'Mismatch Token'}
-		elif time.time() > db.child('applicants').child(userid).child('login').child('expiration').get().val():
-			return {'res': 3, 'msg': 'Session Expired'}
-		else:
-			applicant = db.child('applicants').child(targetid).get().val()
-			applicant.pop('login')
-			applicant.pop('hashpw')
-			applicant.pop('resume')
-			applicant.pop('guest')
-			print(applicant)
-			return {'res': 0, 'msg': 'Successful', 'applicant': applicant}
-
+		category = 'applicants'	
 	elif db.child('recruiters').child(userid).get().val():
-		if token != db.child('recruiters').child(userid).child('login').child('token').get().val():
-			return {'res': 2, 'msg': 'Mismatch Token'}
-		elif time.time() > db.child('recruiters').child(userid).child('login').child('expiration').get().val():
-			return {'res': 3, 'msg': 'Session Expired'}
-		else:
-			applicant = db.child('applicants').child(targetid).get().val()
-			applicant.pop('login')
-			applicant.pop('hashpw')
-			applicant.pop('resume')
-			applicant.pop('guest')
-			print(applicant)
-			return {'res': 0, 'msg': 'Successful', 'applicant': applicant}
-
+		category = 'recruiters'
 	else:
 		return {'res': 1, 'msg': 'User Not Registered'}
 
+	if token != db.child(category).child(userid).child('login').child('token').get().val():
+		return {'res': 2, 'msg': 'Mismatch Token'}
+	elif time.time() > db.child(category).child(userid).child('login').child('expiration').get().val():
+		return {'res': 3, 'msg': 'Session Expired'}
+
+	applicant = db.child('applicants').child(targetid).get().val()
+	if applicant:
+		applicant.pop('login')
+		applicant.pop('hashpw')
+		applicant.pop('resume')
+		applicant.pop('guest')
+		
+		if userid == targetid:
+			if 'applications' not in applicant:
+				applicant['applications'] = []
+		else:
+			if 'applications' in applicant:
+				applicant['applications'] = len(applicant['applications'])
+			else:
+				applicant['applications'] = 0
+
+		return {'res': 0, 'msg': 'Successful', 'applicant': applicant}
+	else:
+		return {'res': 4, 'msg': 'Target Not Found'}
 
 # readRec 
 @api.route('/readRec', methods = ['POST'])
@@ -274,29 +274,24 @@ def readRec():
 	targetid = data.pop('targetid')
 
 	if db.child('applicants').child(userid).get().val():
-		if token != db.child('applicants').child(userid).child('login').child('token').get().val():
-			return {'res': 2, 'msg': 'Mismatch Token'}
-		elif time.time() > db.child('applicants').child(userid).child('login').child('expiration').get().val():
-			return {'res': 3, 'msg': 'Session Expired'}
-		else:
-			recruiter = db.child('recruiters').child(targetid).get().val()
-			recruiter.pop('login')
-			recruiter.pop('hashpw')
-			recruiter.pop('verified')
-			print(recruiter)
-			return {'res': 0, 'msg': 'Successful', 'recruiter': recruiter}
-
+		category = 'applicants'
 	elif db.child('recruiters').child(userid).get().val():
-		if token != db.child('recruiters').child(userid).child('login').child('token').get().val():
-			return {'res': 2, 'msg': 'Mismatch Token'}
-		elif time.time() > db.child('recruiters').child(userid).child('login').child('expiration').get().val():
-			return {'res': 3, 'msg': 'Session Expired'}
-		else:
-			recruiter = db.child('recruiters').child(targetid).get().val()
-			recruiter.pop('login')
-			recruiter.pop('hashpw')
-			recruiter.pop('verified')
-			print(recruiter)
-			return {'res': 0, 'msg': 'Successful', 'recruiter': recruiter}
+		category = 'recruiters'
 	else:
 		return {'res': 1, 'msg': 'User Not Registered'}
+
+	if token != db.child(category).child(userid).child('login').child('token').get().val():
+		return {'res': 2, 'msg': 'Mismatch Token'}
+	elif time.time() > db.child(category).child(userid).child('login').child('expiration').get().val():
+		return {'res': 3, 'msg': 'Session Expired'}
+
+	recruiter = db.child('recruiters').child(targetid).get().val()
+	if recruiter:
+		recruiter.pop('login')
+		recruiter.pop('hashpw')
+		if 'JDs' not in recruiter:
+			recruiter['JDs'] = []
+
+		return {'res': 0, 'msg': 'Successful', 'recruiter': recruiter}
+	else:
+		return {'res': 4, 'msg': 'Target Not Found'}
