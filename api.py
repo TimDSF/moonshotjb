@@ -1,4 +1,5 @@
 import os
+from sqlite3 import Date
 import time
 import bcrypt
 import random
@@ -8,6 +9,7 @@ from db import db, st, firebase
 from flask import request
 from flask_cors import CORS
 from flask import Flask, jsonify
+from datetime import date
 
 UPLOAD_FOLDER = './uploads'
 MAX_SIZE = 10240 # in bytes
@@ -209,7 +211,6 @@ def updateRec():
 		'background': data.pop('background', None),
 		'financing': data.pop('financing', None),
 	}
-	data['JDs'] = []
 	data['verified'] = False
 	userid = data.pop('userid')
 	token = data.pop('token')
@@ -221,7 +222,8 @@ def updateRec():
 			return {'res': 3, 'msg': 'Session Expired'}
 		else:
 			db.child('recruiters').child(userid).update(data)
-			return {'res': 0, 'msg': 'Successful'}
+
+			return {'res': 0, 'msg': 'Successful', 'data': data}
 	else:
 		return {'res': 1, 'msg': 'User Not Registered'}
 
@@ -298,5 +300,60 @@ def readRec():
 			recruiter.pop('verified')
 			print(recruiter)
 			return {'res': 0, 'msg': 'Successful', 'recruiter': recruiter}
+	else:
+		return {'res': 1, 'msg': 'User Not Registered'}
+
+
+#updateJD
+@api.route('/updateJD', methods = ['POST'])
+def updateJD():
+	data = request.form.to_dict()
+    #userid
+	userid = data['userid']
+	token = data.pop('token')
+	# status
+	data['shown'] = True if data['shown'] == 'true' else False
+	data['available'] = True if data['available'] == 'true' else False
+	data['status'] = {
+		'shown': data.pop('shown', None),
+		'available': data.pop('available', None),
+	}
+	#tags
+	data.pop('tag[]', None)
+	data['tags'] = request.form.getlist('tag[]')
+	#auth
+	data['workAuth'] = True if data['workAuth'] == 'true' else False
+	
+	
+
+	if db.child('recruiters').child(userid).get().val():
+		if token != db.child('recruiters').child(userid).child('login').child('token').get().val():
+			return {'res': 2, 'msg': 'Mismatch Token'}
+		elif time.time() > db.child('recruiters').child(userid).child('login').child('expiration').get().val():
+			return {'res': 3, 'msg': 'Session Expired'}
+		else:
+			if 'jdid' in data and data['jdid'] != "": # if the jb exists and need update
+				jdid = data.pop('jdid', None)
+				if db.child('JDs').child(jdid).child('userid').get().val() != userid: # user doesn't own the jb
+					return {'res':4, 'msg': 'User does not own the job'}
+				else:
+					db.child('JDs').child(jdid).update(data)
+					print(data)
+					return {'res': 0, 'msg': 'Successful'}
+			else:
+				jbid = userid+'_'+''.join(random.choices(string.ascii_uppercase + string.digits, k = 20))
+				data['jbid'] = jbid
+				data['releaseDate'] = date.today().strftime("%d/%m/%Y")
+				data['applications'] = []
+				db.child('JDs').child(jbid).set(data)
+				if db.child('recruiters').child(userid).child('JDs').get().val():
+					jblist = db.child('recruiters').child(userid).child('JDs').get().val()
+					jblist.append(jbid)
+					db.child('recruiters').child(userid).child('JDs').set(jblist)
+				else:
+					db.child('recruiters').child(userid).child('JDs').set([jbid])
+				
+				return {'res': 0, 'msg': 'Successful'}
+
 	else:
 		return {'res': 1, 'msg': 'User Not Registered'}
