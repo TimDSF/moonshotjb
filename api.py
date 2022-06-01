@@ -6,9 +6,8 @@ import random
 import string
 
 from db import db, st, firebase
-from flask import request
 from flask_cors import CORS
-from flask import Flask, jsonify
+from flask import Flask, request, jsonify
 from datetime import date
 
 UPLOAD_FOLDER = './uploads'
