@@ -345,6 +345,9 @@ def updateJD():
 					db.child('recruiters').child(userid).child('JDs').set([jbid])
 				
 				return {'res': 0, 'msg': 'Successful'}
-
 	else:
 		return {'res': 1, 'msg': 'User Not Registered'}
+
+
+if __name__ == '__main__':
+	api.run()
