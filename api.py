@@ -349,4 +349,3 @@ def updateJD():
 
 	else:
 		return {'res': 1, 'msg': 'User Not Registered'}
->>>>>>> 7b2da5be7e087c613f6f99a9d2c51c673002422a
