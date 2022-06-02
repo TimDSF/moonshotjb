@@ -33,7 +33,7 @@ def loginApp():
 
 	if applicants:
 		if bcrypt.checkpw(passwd, applicants['hashpw'].encode('utf-8')):
-			token = ''.join(random.choices(string.ascii_uppercase + string.digits, k = 256))
+			token = ''.join(random.choices(string.ascii_uppercase + string.digits, k = 32))
 			data = {
 				'login': {
 					'token': token,
@@ -57,7 +57,7 @@ def signupApp():
 		return {'res': 1, 'msg': 'User ID Occupied'}
 	else:
 		hashpw = bcrypt.hashpw(passwd, bcrypt.gensalt()).decode('utf-8')
-		token = ''.join(random.choices(string.ascii_uppercase + string.digits, k = 256))
+		token = ''.join(random.choices(string.ascii_uppercase + string.digits, k = 32))
 		print(hashpw, token)
 		data = {
 				'hashpw': hashpw,
@@ -156,7 +156,7 @@ def loginRec():
 
 	if recruiters:
 		if bcrypt.checkpw(passwd, recruiters['hashpw'].encode('utf-8')):
-			token = ''.join(random.choices(string.ascii_uppercase + string.digits, k = 256))
+			token = ''.join(random.choices(string.ascii_uppercase + string.digits, k = 32))
 			data = {
 				'login': {
 					'token': token,
@@ -180,7 +180,7 @@ def signupRec():
 		return {'res': 1, 'msg': 'User ID Occupied'}
 	else:
 		hashpw = bcrypt.hashpw(passwd, bcrypt.gensalt()).decode('utf-8')
-		token = ''.join(random.choices(string.ascii_uppercase + string.digits, k = 256))
+		token = ''.join(random.choices(string.ascii_uppercase + string.digits, k = 32))
 		print(hashpw, token)
 		data = {
 				'hashpw': hashpw,
@@ -289,31 +289,76 @@ def readRec():
 	if recruiter:
 		recruiter.pop('login')
 		recruiter.pop('hashpw')
-		if 'JDs' not in recruiter:
-			recruiter['JDs'] = []
+
+		if targetid == userid:
+			if 'JDs' not in recruiter:
+				recruiter['JDs'] = []
+		else:
+			if 'JDs' in recruiter:
+				recruiter['JDs'] = len(recruiter['JDs'])
+			else:
+				recruiter['JDs'] = 0
 
 		return {'res': 0, 'msg': 'Successful', 'recruiter': recruiter}
 	else:
 		return {'res': 4, 'msg': 'Target Not Found'}
 
-#updateJD
+# readJD
+@api.route('/readJD', methods = ['POST'])
+def readJD():
+	data = request.form.to_dict()
+	userid = data.pop('userid')
+	token = data.pop('token')
+	jdid = data.pop('jdid')
+
+	if db.child('applicants').child(userid).get().val():
+		category = 'applicants'
+	elif db.child('recruiters').child(userid).get().val():
+		category = 'recruiters'
+	else:
+		return {'res': 1, 'msg': 'User Not Registered'}
+
+	if token != db.child(category).child(userid).child('login').child('token').get().val():
+		return {'res': 2, 'msg': 'Mismatch Token'}
+	elif time.time() > db.child(category).child(userid).child('login').child('expiration').get().val():
+		return {'res': 3, 'msg': 'Session Expired'}
+
+	JD = db.child('JDs').child(jdid).get().val()
+
+	if JD:
+		if JD['userid'] == userid:
+			if 'applications' not in JD:
+				JD['applications'] = []
+		elif JD['status']['shown']:
+			if 'applications' not in JD:
+				JD['applications'] = 0
+			else:
+				JD['applications'] = len(JD['applications'])
+		else:
+			return {'res': 5, 'msg': 'JD Not Available'}
+		
+		return {'res': 0, 'msg': 'Successful', 'JD': JD}
+	else:
+		return {'res': 4, 'msg': 'JD Does Not Exist'}
+
+
+# updateJD
 @api.route('/updateJD', methods = ['POST'])
 def updateJD():
 	data = request.form.to_dict()
-    #userid
 	userid = data['userid']
 	token = data.pop('token')
-	# status
+
 	data['shown'] = True if data['shown'] == 'true' else False
 	data['available'] = True if data['available'] == 'true' else False
 	data['status'] = {
 		'shown': data.pop('shown', None),
 		'available': data.pop('available', None),
 	}
-	#tags
+	
 	data.pop('tag[]', None)
 	data['tags'] = request.form.getlist('tag[]')
-	#auth
+	
 	data['workAuth'] = True if data['workAuth'] == 'true' else False	
 
 	if db.child('recruiters').child(userid).get().val():
@@ -321,32 +366,32 @@ def updateJD():
 			return {'res': 2, 'msg': 'Mismatch Token'}
 		elif time.time() > db.child('recruiters').child(userid).child('login').child('expiration').get().val():
 			return {'res': 3, 'msg': 'Session Expired'}
-		else:
-			if 'jdid' in data and data['jdid'] != "": # if the jb exists and need update
-				jdid = data.pop('jdid', None)
-				if db.child('JDs').child(jdid).child('userid').get().val() != userid: # user doesn't own the jb
-					return {'res':4, 'msg': 'User does not own the job'}
-				else:
-					db.child('JDs').child(jdid).update(data)
-					print(data)
-					return {'res': 0, 'msg': 'Successful'}
-			else:
-				jbid = userid+'_'+''.join(random.choices(string.ascii_uppercase + string.digits, k = 20))
-				data['jbid'] = jbid
-				data['releaseDate'] = date.today().strftime("%d/%m/%Y")
-				data['applications'] = []
-				db.child('JDs').child(jbid).set(data)
-				if db.child('recruiters').child(userid).child('JDs').get().val():
-					jblist = db.child('recruiters').child(userid).child('JDs').get().val()
-					jblist.append(jbid)
-					db.child('recruiters').child(userid).child('JDs').set(jblist)
-				else:
-					db.child('recruiters').child(userid).child('JDs').set([jbid])
-				
-				return {'res': 0, 'msg': 'Successful'}
+	elif db.child('applicants').child(userid).get().val():
+		return {'res': 5, 'msg': 'Permission Denied: User is not a recruiter'}
 	else:
 		return {'res': 1, 'msg': 'User Not Registered'}
 
+	if 'jdid' in data and data['jdid'] != "": # if the jb exists and need update
+		jdid = data.pop('jdid', None)
+		if db.child('JDs').child(jdid).child('userid').get().val() != userid: # user doesn't own the jb
+			return {'res':4, 'msg': 'Permission Denied: User does not own this JD'}
+		else:
+			db.child('JDs').child(jdid).update(data)
+			return {'res': 0, 'msg': 'Successful (update)'}
+	else:
+		jdid = userid+'_'+''.join(random.choices(string.ascii_uppercase + string.digits, k = 16))
+		data['releaseDate'] = date.today().strftime("%d/%m/%Y")
+		data['applications'] = []
+		db.child('JDs').child(jdid).set(data)
+		
+		if db.child('recruiters').child(userid).child('JDs').get().val():
+			JDs = list(db.child('recruiters').child(userid).child('JDs').get().val().values())
+			JDs.append(jdid)
+			db.child('recruiters').child(userid).child('JDs').set(JDs)
+		else:
+			db.child('recruiters').child(userid).child('JDs').set([jdid])
+		
+		return {'res': 0, 'msg': 'Successful (create)'}
 
 if __name__ == '__main__':
 	api.run()

@@ -152,6 +152,7 @@
             <input type="submit" value="Submit">
         </form>
         <br>
+
         <b>
             readRec
         </b>
@@ -164,6 +165,7 @@
             <input type="text" name="targetid"><br><br>
             <input type="submit" value="Submit">
         </form>
+        <br>
 
         <b>
             updateJD
@@ -173,12 +175,12 @@
             <input type="text" name="userid"><br><br>
             <label for="token">token:</label>
             <input type="text" name="token"><br><br>
+            <label for="jdid">jdid (optional):</label>
+            <input type="text" name="jdid"><br><br></p>
             <label for="shown">shown:</label>
             <input type="text" name="shown"><br><br>
             <label for="available">available:</label>
             <input type="text" name="available"><br><br>
-            <label for="jdid">jdid (optional):</label>
-            <input type="text" name="jdid"><br><br></p>
             <label for="title">title:</label>
             <input type="text" name="title"><br><br>
             <label for="location">location:</label>
@@ -196,5 +198,18 @@
             <input type="submit" value="Submit">
         </form>
         <br>
+
+        <b>
+            readJD
+        </b>
+        <form action = "http://127.0.0.1:5000/readJD" method="post" enctype="multipart/form-data">
+            <label for="userid">userid:</label>
+            <input type="text" name="userid"><br><br>
+            <label for="token">token:</label>
+            <input type="text" name="token"><br><br>
+            <label for="targetid">jdid:</label>
+            <input type="text" name="jdid"><br><br>
+            <input type="submit" value="Submit">
+        </form>
     </body>
 </html>
