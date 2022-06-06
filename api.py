@@ -335,7 +335,7 @@ def readJD():
 			else:
 				JD['applications'] = len(JD['applications'])
 		else:
-			return {'res': 5, 'msg': 'JD Not Available'}
+			return {'res': 5, 'msg': 'JD Not Shown'}
 		
 		return {'res': 0, 'msg': 'Successful', 'JD': JD}
 	else:
@@ -372,26 +372,75 @@ def updateJD():
 		return {'res': 1, 'msg': 'User Not Registered'}
 
 	if 'jdid' in data and data['jdid'] != "": # if the jb exists and need update
-		jdid = data.pop('jdid', None)
-		if db.child('JDs').child(jdid).child('userid').get().val() != userid: # user doesn't own the jb
-			return {'res':4, 'msg': 'Permission Denied: User does not own this JD'}
+		jdid = data.pop('jdid')
+
+		JD = db.child('JDs').child(jdid).get().val()
+		if JD:
+			if JD['userid'] != userid: # user doesn't own the jb
+				return {'res':4, 'msg': 'Permission Denied: User does not own this JD'}
+			else:
+				db.child('JDs').child(jdid).update(data)
+				return {'res': 0, 'msg': 'Successful (update)'}
 		else:
-			db.child('JDs').child(jdid).update(data)
-			return {'res': 0, 'msg': 'Successful (update)'}
+			return {'res': 6, 'msg': 'JD Not Exist'}
 	else:
+		data.pop('jdid', None)
+
 		jdid = userid+'_'+''.join(random.choices(string.ascii_uppercase + string.digits, k = 16))
 		data['releaseDate'] = date.today().strftime("%d/%m/%Y")
 		data['applications'] = []
 		db.child('JDs').child(jdid).set(data)
 		
-		if db.child('recruiters').child(userid).child('JDs').get().val():
-			JDs = list(db.child('recruiters').child(userid).child('JDs').get().val().values())
+		JDs = db.child('recruiters').child(userid).child('JDs').get().val()
+		if JDs:
 			JDs.append(jdid)
 			db.child('recruiters').child(userid).child('JDs').set(JDs)
 		else:
 			db.child('recruiters').child(userid).child('JDs').set([jdid])
 		
 		return {'res': 0, 'msg': 'Successful (create)'}
+
+
+# submitApplication
+@api.route('/submitApplication', methods = ['POST'])
+def submitApplication():
+	data = request.form.to_dict()
+	userid = data['userid']
+	token = data.pop('token')
+	jdid = data['jdid']
+
+	if db.child('applicants').child(userid).get().val():
+		if token != db.child('applicants').child(userid).child('login').child('token').get().val():
+			return {'res': 2, 'msg': 'Mismatch Token'}
+		elif time.time() > db.child('applicants').child(userid).child('login').child('expiration').get().val():
+			return {'res': 3, 'msg': 'Session Expired'}
+	else:
+		return {'res': 1, 'msg': 'User Not Registered'}
+
+	jd = db.child('JDs').child(jdid).get().val()
+	if jd:
+		if jd['status']['available']:
+			appid = userid+'_'+''.join(random.choices(string.ascii_uppercase + string.digits, k = 16))
+			
+			data['starred'] = False
+			data['timestamp'] = time.time()
+			data['status'] = 'pending'
+
+			db.child('applications').child(appid).set(data)
+			
+			apps = db.child('JDs').child(jdid).child('application').get().val()
+			if apps:
+				apps.append(appid)
+				db.child('JDs').child(jdid).child('application').set(apps)
+			else:
+				db.child('JDs').child(jdid).child('application').set([appid])
+
+			return {'res': 0, 'msg': 'Successful', 'appid': appid}
+		else:
+			return {'res': 4, 'msg': 'JD Not Exist'}
+	else:
+		return {'res': 5, 'msg': 'JD Not Exist'}
+
 
 if __name__ == '__main__':
 	api.run()
