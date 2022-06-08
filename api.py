@@ -428,12 +428,19 @@ def submitApplication():
 
 			db.child('applications').child(appid).set(data)
 			
-			apps = db.child('JDs').child(jdid).child('application').get().val()
+			apps = db.child('JDs').child(jdid).child('applications').get().val()
 			if apps:
 				apps.append(appid)
-				db.child('JDs').child(jdid).child('application').set(apps)
+				db.child('JDs').child(jdid).child('applications').set(apps)
 			else:
-				db.child('JDs').child(jdid).child('application').set([appid])
+				db.child('JDs').child(jdid).child('applications').set([appid])
+
+			apps = db.child('applicants').child(userid).child('applications').get().val()
+			if apps:
+				apps.append(appid)
+				db.child('applicants').child(userid).child('applications').set(apps)
+			else:
+				db.child('applicants').child(userid).child('applications').set([appid])
 
 			return {'res': 0, 'msg': 'Successful', 'appid': appid}
 		else:
@@ -442,5 +449,41 @@ def submitApplication():
 		return {'res': 5, 'msg': 'JD Not Exist'}
 
 
+# viewApplication
+@api.route('/viewApplication', methods = ['POST'])
+def viewApplication():
+	data = request.form.to_dict()
+	userid = data.pop('userid')
+	token = data.pop('token')
+	appid = data.pop('appid')
+
+	if db.child('applicants').child(userid).get().val():
+		category = 'applicants'
+	elif db.child('recruiters').child(userid).get().val():
+		category = 'recruiters'
+	else:
+		return {'res': 1, 'msg': 'User Not Registered'}
+
+	if token != db.child(category).child(userid).child('login').child('token').get().val():
+		return {'res': 2, 'msg': 'Mismatch Token'}
+	elif time.time() > db.child(category).child(userid).child('login').child('expiration').get().val():
+		return {'res': 3, 'msg': 'Session Expired'}
+
+	app = db.child('applications').child(appid).get().val()
+	if app:
+		if category == 'applicants':
+			if app['userid'] == userid:
+				return {'res': 0, 'msg': 'Successful', 'application': app}
+			else:
+				return {'res': 5, 'msg': 'Application Not Yours'}
+		else:
+			JDs = db.child('recruiters').child(userid).child('JDs').get().val()
+			if JDs and app['jdid'] in JDs:
+				return {'res': 0, 'msg': 'Successful', 'application': app}
+			else:
+				return {'res': 6, 'msg': 'JD Not Yours'}
+	else:
+		return {'res': 4, 'msg': 'Application Not Exist'}
+
 if __name__ == '__main__':
-	api.run()
+	api.run(port = 5000)
