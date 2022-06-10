@@ -290,14 +290,8 @@ def readRec():
 		recruiter.pop('login')
 		recruiter.pop('hashpw')
 
-		if targetid == userid:
-			if 'JDs' not in recruiter:
-				recruiter['JDs'] = []
-		else:
-			if 'JDs' in recruiter:
-				recruiter['JDs'] = len(recruiter['JDs'])
-			else:
-				recruiter['JDs'] = 0
+		if 'JDs' not in recruiter:
+			recruiter['JDs'] = []
 
 		return {'res': 0, 'msg': 'Successful', 'recruiter': recruiter}
 	else:
