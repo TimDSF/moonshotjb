@@ -293,9 +293,37 @@ def readRec():
 		if 'JDs' not in recruiter:
 			recruiter['JDs'] = []
 
+		for idx, userid in enumerate(recruiter['JDs']):
+			JD = db.child('JDs').child(userid).get().val()
+			if JD['status']['shown']:
+				JD.pop('userid')
+				recruiter['JDs'][idx] = JD
+
 		return {'res': 0, 'msg': 'Successful', 'recruiter': recruiter}
 	else:
 		return {'res': 4, 'msg': 'Target Not Found'}
+
+# readAllRec
+@api.route('/readAllRec', methods = ['POST'])
+def readAllRec():
+	data = request.form.to_dict()
+	userid = data.pop('userid')
+	token = data.pop('token')
+
+	if db.child('applicants').child(userid).get().val():
+		category = 'applicants'
+	elif db.child('recruiters').child(userid).get().val():
+		category = 'recruiters'
+	else:
+		return {'res': 1, 'msg': 'User Not Registered'}
+
+	if token != db.child(category).child(userid).child('login').child('token').get().val():
+		return {'res': 2, 'msg': 'Mismatch Token'}
+	elif time.time() > db.child(category).child(userid).child('login').child('expiration').get().val():
+		return {'res': 3, 'msg': 'Session Expired'}
+
+	recruiters = list(db.child('recruiters').get().val().keys())
+	return {'res': 0, 'msg': 'Successful', 'recruiters': recruiters}
 
 # readJD
 @api.route('/readJD', methods = ['POST'])
