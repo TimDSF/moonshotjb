@@ -1,17 +1,22 @@
-import os
-import time
 import bcrypt
+import os
 import random
 import string
+import time
 
-from db import db, st, firebase
-from flask_cors import CORS
-from flask import Flask, request, jsonify
+from affinda import AffindaAPI, TokenCredential
 from datetime import date
+from db import db, st, firebase
+from flask import Flask, jsonify, request, send_from_directory
+from flask_cors import CORS
 
 UPLOAD_FOLDER = './uploads'
 MAX_SIZE = 10240 # in bytes
 ALLOWED_FORMATS = {'pdf'}
+
+AffindaToken = '15197965097a1f10ac9cdcb75334b88feef21c84'
+AffindaCred = TokenCredential(token = AffindaToken)
+AffindaClient = AffindaAPI(credential = AffindaCred)
 
 api = Flask(__name__)
 api.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
@@ -86,7 +91,6 @@ def signupGuest():
 		return {'res': 0, 'msg': 'Successful'}
 	
 # update applicant
-# note: in order to have the file uploaded successfully, the html form needs to have encryption of enctype="multipart/form-data"
 @api.route('/updateApp', methods = ['POST'])
 def updateApp():
 	data = request.form.to_dict()
@@ -119,32 +123,88 @@ def updateApp():
 	userid = data.pop('userid')
 	token = data.pop('token')
 
-	# st.child(data['resume']).put(os.path.join(UPLOAD_FOLDER, filename))
-
 	if db.child('applicants').child(userid).get().val():
 		if token != db.child('applicants').child(userid).child('login').child('token').get().val():
 			return {'res': 2, 'msg': 'Mismatch Token'}
 		elif time.time() > db.child('applicants').child(userid).child('login').child('expiration').get().val():
 			return {'res': 3, 'msg': 'Session Expired'}
 		else:
-			if 'resume' in request.files:
-				file = request.files['resume']
-				extension = file.filename.split('.')[-1]
-				filename = 'resume_'+userid+'.'+extension
-
-				if not file or file.filename == '':
-					return {'res': 4, 'msg': 'No Resume Uploaded'}
-				elif extension not in ALLOWED_FORMATS:
-					return {'res': 5, 'msg': 'Unsupported Resume Format'}
-				else:
-					data['resume'] = True
-					file.save(os.path.join(UPLOAD_FOLDER, filename))
-			
 			db.child('applicants').child(userid).update(data)
 		
 			return {'res': 0, 'msg': 'Successful'}
 	else:
 		return {'res': 1, 'msg': 'User Not Registered'}
+
+
+# upload resume
+@api.route('/uploadResume', methods = ['POST'])
+def uploadResume():
+	data = request.form.to_dict()
+	userid = data.pop('userid')
+	token = data.pop('token')
+
+	if db.child('applicants').child(userid).get().val():
+		if token != db.child('applicants').child(userid).child('login').child('token').get().val():
+			return {'res': 2, 'msg': 'Mismatch Token'}
+		elif time.time() > db.child('applicants').child(userid).child('login').child('expiration').get().val():
+			return {'res': 3, 'msg': 'Session Expired'}			
+	else:
+		return {'res': 1, 'msg': 'User Not Registered'}
+
+	if 'resume' in request.files:
+		file = request.files['resume']
+		extension = file.filename.split('.')[-1]
+		filename = 'resume_'+userid+'.'+extension
+
+		if not file or file.filename == '':
+			return {'res': 4, 'msg': 'No Resume Uploaded'}
+		elif extension not in ALLOWED_FORMATS:
+			return {'res': 5, 'msg': 'Unsupported Resume Format'}
+		else:
+			path = os.path.join(UPLOAD_FOLDER, filename)
+			file.save(path)
+			file2 = open(path, 'rb')
+			resume = AffindaClient.create_resume(file = file2)
+
+			skills = resume.as_dict()['data']['skills']
+			tags = [''] * len(skills)
+			for idx, tmp in enumerate(skills):
+				tags[idx] = tmp['name']
+			
+			return {'res': 0, 'msg': 'Successful', 'tags': tags}
+	else:
+		return {'res': 4, 'msg': 'No Resume Uploaded'}
+
+# download resume
+@api.route('/downloadResume', methods = ['POST'])
+def downloadResume():
+	data = request.form.to_dict()
+	userid = data.pop('userid')
+	token = data.pop('token')
+	targetid = data.pop('targetid')
+
+	if db.child('applicants').child(userid).get().val():
+		category = 'applicants'	
+	elif db.child('recruiters').child(userid).get().val():
+		category = 'recruiters'
+	else:
+		return {'res': 1, 'msg': 'User Not Registered'}
+
+	if token != db.child(category).child(userid).child('login').child('token').get().val():
+		return {'res': 2, 'msg': 'Mismatch Token'}
+	elif time.time() > db.child(category).child(userid).child('login').child('expiration').get().val():
+		return {'res': 3, 'msg': 'Session Expired'}
+
+	if category == 'applicants' and userid != targetid:
+		return {'res': 4, 'msg': 'Permission Denied'}
+
+	filename = 'resume_'+targetid+'.pdf'
+	path = os.path.join(UPLOAD_FOLDER, filename)
+
+	if not os.path.exists(path):
+		return {'res': 5, 'msg': 'Resume Not Uploaded'}
+
+	return send_from_directory(directory = UPLOAD_FOLDER, path = filename, filename = filename)
 
 # login recruiter
 @api.route('/loginRec', methods = ['POST'])
@@ -545,4 +605,4 @@ def updateApplication():
 	return {'res': 0, 'msg': 'Successful'}	
 
 if __name__ == '__main__':
-	api.run(port = 5000)
+	api.run(port = 8888)

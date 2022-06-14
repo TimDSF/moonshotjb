@@ -69,7 +69,7 @@
         <b>
             updateApp
         </b>
-        <form action = "http://127.0.0.1:5000/updateApp" method="post" enctype="multipart/form-data">
+        <form action = "http://127.0.0.1:5000/updateApp" method="post">
             <label for="userid">userid:</label>
             <input type="text" name="userid"><br><br>
             <label for="token">token:</label>
@@ -106,15 +106,42 @@
             <label for="tag">tag2:</label>
             <input type="text" name="tag[]"><br><br>
 
+            <input type="submit" value="Submit">
+        </form>
+        <br>
+
+        <b>
+            uploadResume
+        </b>
+        <form action = "http://127.0.0.1:5000/uploadResume" method="post" enctype="multipart/form-data">
+            <label for="userid">userid:</label>
+            <input type="text" name="userid"><br><br>
+            <label for="token">token:</label>
+            <input type="text" name="token"><br><br>
             <label for="resume">resume:</label>
             <input type="file" name="resume"><br><br>
             <input type="submit" value="Submit">
         </form>
         <br>
+
+        <b>
+            downloadResume
+        </b>
+        <form action = "http://127.0.0.1:5000/downloadResume" method="post">
+            <label for="userid">userid:</label>
+            <input type="text" name="userid"><br><br>
+            <label for="token">token:</label>
+            <input type="text" name="token"><br><br>
+            <label for="targetid">targetid:</label>
+            <input type="text" name="targetid"><br><br>
+            <input type="submit" value="Submit">
+        </form>
+        <br>
+
         <b>
             updateRec
         </b>
-        <form action = "http://127.0.0.1:5000/updateRec" method="post" enctype="multipart/form-data">
+        <form action = "http://127.0.0.1:5000/updateRec" method="post">
             <label for="userid">userid:</label>
             <input type="text" name="userid"><br><br>
             <label for="token">token:</label>
@@ -138,11 +165,11 @@
             <input type="submit" value="Submit">
         </form>
         <br>
-        <br>
+        
         <b>
             readApp
         </b>
-        <form action = "http://127.0.0.1:5000/readApp" method="post" enctype="multipart/form-data">
+        <form action = "http://127.0.0.1:5000/readApp" method="post">
             <label for="userid">userid:</label>
             <input type="text" name="userid"><br><br>
             <label for="token">token:</label>
@@ -156,7 +183,7 @@
         <b>
             readRec
         </b>
-        <form action = "http://127.0.0.1:5000/readRec" method="post" enctype="multipart/form-data">
+        <form action = "http://127.0.0.1:5000/readRec" method="post">
             <label for="userid">userid:</label>
             <input type="text" name="userid"><br><br>
             <label for="token">token:</label>
@@ -170,7 +197,7 @@
         <b>
             readAllRec
         </b>
-        <form action = "http://127.0.0.1:5000/readAllRec" method="post" enctype="multipart/form-data">
+        <form action = "http://127.0.0.1:5000/readAllRec" method="post">
             <label for="userid">userid:</label>
             <input type="text" name="userid"><br><br>
             <label for="token">token:</label>
@@ -182,7 +209,7 @@
         <b>
             readJD
         </b>
-        <form action = "http://127.0.0.1:5000/readJD" method="post" enctype="multipart/form-data">
+        <form action = "http://127.0.0.1:5000/readJD" method="post">
             <label for="userid">userid:</label>
             <input type="text" name="userid"><br><br>
             <label for="token">token:</label>
@@ -196,7 +223,7 @@
         <b>
             updateJD
         </b>
-        <form action = "http://127.0.0.1:5000/updateJD" method="post" enctype="multipart/form-data">
+        <form action = "http://127.0.0.1:5000/updateJD" method="post">
             <label for="userid">userid:</label>
             <input type="text" name="userid"><br><br>
             <label for="token">token:</label>
@@ -228,7 +255,7 @@
         <b>
             submitApplication
         </b>
-        <form action = "http://127.0.0.1:5000/submitApplication" method="post" enctype="multipart/form-data">
+        <form action = "http://127.0.0.1:5000/submitApplication" method="post">
             <label for="userid">userid:</label>
             <input type="text" name="userid"><br><br>
             <label for="token">token:</label>
@@ -242,7 +269,7 @@
         <b>
             viewApplication
         </b>
-        <form action = "http://127.0.0.1:5000/viewApplication" method="post" enctype="multipart/form-data">
+        <form action = "http://127.0.0.1:5000/viewApplication" method="post">
             <label for="userid">userid:</label>
             <input type="text" name="userid"><br><br>
             <label for="token">token:</label>
@@ -256,7 +283,7 @@
         <b>
             updateApplication
         </b>
-        <form action = "http://127.0.0.1:5000/updateApplication" method="post" enctype="multipart/form-data">
+        <form action = "http://127.0.0.1:5000/updateApplication" method="post">
             <label for="userid">userid:</label>
             <input type="text" name="userid"><br><br>
             <label for="token">token:</label>
