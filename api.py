@@ -159,11 +159,11 @@ def uploadResume():
 		if resume:
 			print(resume)
 			print(type(resume))
-			file = base64.b64decode(resume)
-			filename = 'resume_'+userid+'.pdf'
+			# file = base64.b64decode(resume)
+			# filename = 'resume_'+userid+'.pdf'
 
 			f = open(filename, "wb")
-			f.write(base64.decodebytes(file))
+			f.write(resume) # base64.decodebytes(file)
 			f.close()
 		else:
 			return {'res': 4, 'msg': 'No Resume Uploaded'}
