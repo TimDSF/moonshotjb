@@ -145,7 +145,6 @@ def uploadResume():
 	data = request.form.to_dict()
 	userid = data.pop('userid')
 	token = data.pop('token')
-	resume = data.pop('resume')
 
 	if db.child('applicants').child(userid).get().val():
 		if token != db.child('applicants').child(userid).child('login').child('token').get().val():
@@ -156,6 +155,7 @@ def uploadResume():
 		return {'res': 1, 'msg': 'User Not Registered'}
 
 	if use_base64:
+		resume = data.pop('resume')
 		if resume:
 			# this part is not working on Retool
 			print(resume)
