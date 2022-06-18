@@ -140,7 +140,7 @@ def updateApp():
 # upload resume
 @api.route('/uploadResume', methods = ['POST'])
 def uploadResume():
-	base64 = True
+	use_base64 = True
 	
 	data = request.form.to_dict()
 	userid = data.pop('userid')
@@ -155,7 +155,7 @@ def uploadResume():
 	else:
 		return {'res': 1, 'msg': 'User Not Registered'}
 
-	if base64:
+	if use_base64:
 		if resume:
 			file = base64.b64decode(resume)
 			filename = 'resume_'+userid+'.'+extension
