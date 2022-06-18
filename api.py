@@ -140,7 +140,7 @@ def updateApp():
 # upload resume
 @api.route('/uploadResume', methods = ['POST'])
 def uploadResume():
-	use_base64 = True
+	use_base64 = False
 	
 	data = request.form.to_dict()
 	userid = data.pop('userid')
@@ -157,6 +157,7 @@ def uploadResume():
 
 	if use_base64:
 		if resume:
+			# this part is not working on Retool
 			print(resume)
 			print(type(resume))
 			# file = base64.b64decode(resume)
