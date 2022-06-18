@@ -161,7 +161,7 @@ def uploadResume():
 			filename = 'resume_'+userid+'.pdf'
 
 			f = open(filename, "wb")
-			f.write(base64.b64decode(file))
+			f.write(base64.decodebytes(file))
 			f.close()
 		else:
 			return {'res': 4, 'msg': 'No Resume Uploaded'}
