@@ -349,20 +349,6 @@ def readApp():
 	else:
 		return {'res': 4, 'msg': 'Target Not Found'}
 
-# getRecommendation
-@api.route('/readJD', methods = ['POST'])
-def readJD():
-	data = request.form.to_dict()
-	userid = data.pop('userid')
-	token = data.pop('token')
-	jdid = data.pop('jdid')
-
-	if db.child('applicants').child(userid).get().val():
-		category = 'applicants'
-	elif db.child('recruiters').child(userid).get().val():
-		category = 'recruiters'
-	else:
-		return {'res': 1, 'msg': 'User Not Registered'}
 
 # readRec 
 @api.route('/readRec', methods = ['POST'])
