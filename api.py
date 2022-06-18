@@ -349,6 +349,21 @@ def readApp():
 	else:
 		return {'res': 4, 'msg': 'Target Not Found'}
 
+# getRecommendation
+@api.route('/readJD', methods = ['POST'])
+def readJD():
+	data = request.form.to_dict()
+	userid = data.pop('userid')
+	token = data.pop('token')
+	jdid = data.pop('jdid')
+
+	if db.child('applicants').child(userid).get().val():
+		category = 'applicants'
+	elif db.child('recruiters').child(userid).get().val():
+		category = 'recruiters'
+	else:
+		return {'res': 1, 'msg': 'User Not Registered'}
+
 # readRec 
 @api.route('/readRec', methods = ['POST'])
 def readRec():
@@ -387,27 +402,20 @@ def readRec():
 	else:
 		return {'res': 4, 'msg': 'Target Not Found'}
 
-# readAllRec
-@api.route('/readAllRec', methods = ['POST'])
-def readAllRec():
+# getRecommendationJD
+@api.route('/getRecommendationJD', methods = ['POST'])
+def getRecommendationJD():
 	data = request.form.to_dict()
 	userid = data.pop('userid')
 	token = data.pop('token')
 
-	if db.child('applicants').child(userid).get().val():
-		category = 'applicants'
-	elif db.child('recruiters').child(userid).get().val():
-		category = 'recruiters'
-	else:
-		return {'res': 1, 'msg': 'User Not Registered'}
-
-	if token != db.child(category).child(userid).child('login').child('token').get().val():
+	if token != db.child('applicants').child(userid).child('login').child('token').get().val():
 		return {'res': 2, 'msg': 'Mismatch Token'}
-	elif time.time() > db.child(category).child(userid).child('login').child('expiration').get().val():
+	elif time.time() > db.child('applicants').child(userid).child('login').child('expiration').get().val():
 		return {'res': 3, 'msg': 'Session Expired'}
 
-	recruiters = list(db.child('recruiters').get().val().keys())
-	return {'res': 0, 'msg': 'Successful', 'recruiters': recruiters}
+	# placeholder
+	return {'res': 0, 'msg': 'Successful', 'JDs': ['recruiter1_JJJ6OL8BY1K3PX6MMQWQ', 'recruiter1_G5KBZ5EEGMQTLKNA']}
 
 # readJD
 @api.route('/readJD', methods = ['POST'])
@@ -486,7 +494,6 @@ def updateJD():
 				return {'res':4, 'msg': 'Permission Denied: User does not own this JD'}
 			else:
 				db.child('JDs').child(jdid).update(data)
-				return {'res': 0, 'msg': 'Successful (update)'}
 		else:
 			return {'res': 6, 'msg': 'JD Not Exist'}
 	else:
@@ -504,7 +511,17 @@ def updateJD():
 		else:
 			db.child('recruiters').child(userid).child('JDs').set([jdid])
 		
-		return {'res': 0, 'msg': 'Successful (create)'}
+	# not finished yet
+	file = data['description']
+	resume = AffindaClient.create_resume(file = file)
+
+	print(resume.as_dict())
+	skills = resume.as_dict()['data']['skills']
+	tags = [''] * len(skills)
+	for idx, tmp in enumerate(skills):
+		tags[idx] = tmp['name']
+
+	print(tags)
 
 
 # submitApplication
