@@ -1,3 +1,4 @@
+import base64
 import bcrypt
 import os
 import random
@@ -139,10 +140,12 @@ def updateApp():
 # upload resume
 @api.route('/uploadResume', methods = ['POST'])
 def uploadResume():
+	base64 = True
+	
 	data = request.form.to_dict()
-	print(data)
 	userid = data.pop('userid')
 	token = data.pop('token')
+	resume = data.pop('resume')
 
 	if db.child('applicants').child(userid).get().val():
 		if token != db.child('applicants').child(userid).child('login').child('token').get().val():
@@ -152,29 +155,42 @@ def uploadResume():
 	else:
 		return {'res': 1, 'msg': 'User Not Registered'}
 
-	if 'resume' in request.files:
-		file = request.files['resume']
-		extension = file.filename.split('.')[-1]
-		filename = 'resume_'+userid+'.'+extension
+	if base64:
+		if resume:
+			file = base64.b64decode(resume)
+			filename = 'resume_'+userid+'.'+extension
 
-		if not file or file.filename == '':
-			return {'res': 4, 'msg': 'No Resume Uploaded'}
-		elif extension not in ALLOWED_FORMATS:
-			return {'res': 5, 'msg': 'Unsupported Resume Format'}
+			f = open(filename, "w")
+			f.write(file.decode('utf-8'))
+			f.close()
 		else:
-			path = os.path.join(UPLOAD_FOLDER, filename)
-			file.save(path)
-			file2 = open(path, 'rb')
-			resume = AffindaClient.create_resume(file = file2)
-
-			skills = resume.as_dict()['data']['skills']
-			tags = [''] * len(skills)
-			for idx, tmp in enumerate(skills):
-				tags[idx] = tmp['name']
-			
-			return {'res': 0, 'msg': 'Successful', 'tags': tags}
+			return {'res': 4, 'msg': 'No Resume Uploaded'}
 	else:
-		return {'res': 4, 'msg': 'No Resume Uploaded'}
+		if 'resume' in request.files:
+			file = request.files['resume']
+			extension = file.filename.split('.')[-1]
+			filename = 'resume_'+userid+'.'+extension
+
+			if not file or file.filename == '':
+				return {'res': 4, 'msg': 'No Resume Uploaded'}
+			elif extension not in ALLOWED_FORMATS:
+				return {'res': 5, 'msg': 'Unsupported Resume Format'}
+			else:
+				path = os.path.join(UPLOAD_FOLDER, filename)
+				file.save(path)
+		else:
+			return {'res': 4, 'msg': 'No Resume Uploaded'}
+
+	file2 = open(path, 'rb')
+	resume = AffindaClient.create_resume(file = file2)
+
+	skills = resume.as_dict()['data']['skills']
+	tags = [''] * len(skills)
+	for idx, tmp in enumerate(skills):
+		tags[idx] = tmp['name']
+
+	return {'res': 0, 'msg': 'Successful', 'tags': tags}
+
 
 # download resume
 @api.route('/downloadResume', methods = ['POST'])
