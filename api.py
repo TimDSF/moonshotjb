@@ -162,7 +162,7 @@ def uploadResume():
 			# file = base64.b64decode(resume)
 			filename = 'resume_'+userid+'.pdf'
 
-			f = open(filename, "wb")
+			f = open(filename, "w")
 			f.write(resume) # base64.decodebytes(file)
 			f.close()
 		else:
