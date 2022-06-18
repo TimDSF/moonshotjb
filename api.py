@@ -140,6 +140,7 @@ def updateApp():
 @api.route('/uploadResume', methods = ['POST'])
 def uploadResume():
 	data = request.form.to_dict()
+	print(data)
 	userid = data.pop('userid')
 	token = data.pop('token')
 
