@@ -158,7 +158,7 @@ def uploadResume():
 	if use_base64:
 		if resume:
 			file = resume
-			filename = 'resume_'+userid+'.'+extension
+			filename = 'resume_'+userid+'.pdf'
 
 			f = open(filename, "w")
 			f.write(base64.b64decode(file))
