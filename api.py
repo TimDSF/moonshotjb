@@ -400,8 +400,23 @@ def getRecommendationJD():
 	elif time.time() > db.child('applicants').child(userid).child('login').child('expiration').get().val():
 		return {'res': 3, 'msg': 'Session Expired'}
 
-	# placeholder
-	return {'res': 0, 'msg': 'Successful', 'JDs': ['recruiter1_JJJ6OL8BY1K3PX6MMQWQ', 'recruiter1_G5KBZ5EEGMQTLKNA']}
+	tags = set(db.child('applicants').child(userid).child('tags').get().val())
+	apps = db.child('applicants').child(userid).child('applications').get().val()
+
+	JDs = dict(db.child('JDs').get().val())
+	dels = [jdid for jdid in JDs if not (jdid not in apps and JDs[jdid]['status']['shown'] and JDs[jdid]['status']['available'])]
+	for jdid in dels:
+		del JDs[jdid]
+
+	for jdid in JDs:
+		JDs[jdid]['score'] = len(tags & set(JDs[jdid]['tags']))
+		if 'applications' in JDs[jdid]:
+			JDs[jdid]['applications'] = len(JDs[jdid]['applications'])
+		else:
+			JDs[jdid]['applications'] = 0
+
+	recommentations = sorted(list(JDs.values()), key = lambda x: x['score'], reverse = True)
+	return {'res': 0, 'msg': 'Successful', 'JDs': recommentations}
 
 # readJD
 @api.route('/readJD', methods = ['POST'])
