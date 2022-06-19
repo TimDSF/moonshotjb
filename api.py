@@ -497,9 +497,15 @@ def updateJD():
 		else:
 			db.child('recruiters').child(userid).child('JDs').set([jdid])
 		
-	# not finished yet
-	file = data['description']
-	resume = AffindaClient.create_resume(file = file)
+	desc = data['description']
+	path = 'tmp'+str(time.time())+'.txt'
+	f = open(path, 'w')
+	f.write(desc)
+	f.close()
+
+	f = open(path, 'rb')
+	resume = AffindaClient.create_resume(file = f)
+	f.close()
 
 	print(resume.as_dict())
 	skills = resume.as_dict()['data']['skills']
@@ -507,7 +513,7 @@ def updateJD():
 	for idx, tmp in enumerate(skills):
 		tags[idx] = tmp['name']
 
-	print(tags)
+	return {'res': 0, 'msg': 'Successful', 'tags': tags}
 
 
 # submitApplication
