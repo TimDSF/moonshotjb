@@ -277,7 +277,6 @@ def signupRec():
 		return {'res': 0, 'msg': 'Successful', 'token': token}
 
 # update recruiter
-# note: in order to have the file uploaded successfully, the html form needs to have encryption of enctype="multipart/form-data"
 @api.route('/updateRec', methods = ['POST'])
 def updateRec():
 	data = request.form.to_dict()
@@ -395,13 +394,21 @@ def getRecommendationJD():
 	userid = data.pop('userid')
 	token = data.pop('token')
 
+	if not db.child('applicants').child(userid).get().val():
+		return {'res': 1, 'msg': 'User Not Registered'}
 	if token != db.child('applicants').child(userid).child('login').child('token').get().val():
 		return {'res': 2, 'msg': 'Mismatch Token'}
 	elif time.time() > db.child('applicants').child(userid).child('login').child('expiration').get().val():
 		return {'res': 3, 'msg': 'Session Expired'}
 
-	tags = set(db.child('applicants').child(userid).child('tags').get().val())
+	tags = db.child('applicants').child(userid).child('tags').get().val()
+	if not tags:
+		tags = []
+	tags = set(tags)
+		
 	apps = db.child('applicants').child(userid).child('applications').get().val()
+	if not apps:
+		apps = []
 
 	JDs = dict(db.child('JDs').get().val())
 	dels = [jdid for jdid in JDs if not (jdid not in apps and JDs[jdid]['status']['shown'] and JDs[jdid]['status']['available'])]
