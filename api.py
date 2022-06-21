@@ -337,6 +337,13 @@ def readApp():
 		if userid == targetid:
 			if 'applications' not in applicant:
 				applicant['applications'] = []
+
+			for idx, appid in enumerate(applicant['applications']):
+				app = db.child('applications').child(appid).get().val()
+				JD = db.child('JDs').child(app['jdid']).get().val()
+				JD['applications'] = len(JD['applications'])
+
+				applicant['applications'][idx] = {'app': app, 'JD': JD}
 		else:
 			if 'applications' in applicant:
 				applicant['applications'] = len(applicant['applications'])
@@ -509,7 +516,7 @@ def updateJD():
 	else:
 		data.pop('jdid', None)
 
-		jdid = userid+'_'+''.join(random.choices(string.ascii_uppercase + string.digits, k = 16))
+		jdid = userid+'_'+str(int(time.time()*1000))
 		data['releaseDate'] = date.today().strftime("%d/%m/%Y")
 		data['applications'] = []
 		db.child('JDs').child(jdid).set(data)
@@ -531,7 +538,6 @@ def updateJD():
 	resume = AffindaClient.create_resume(file = f)
 	f.close()
 
-	print(resume.as_dict())
 	skills = resume.as_dict()['data']['skills']
 	tags = [''] * len(skills)
 	for idx, tmp in enumerate(skills):
@@ -559,29 +565,34 @@ def submitApplication():
 	jd = db.child('JDs').child(jdid).get().val()
 	if jd:
 		if jd['status']['available']:
-			appid = userid+'_'+''.join(random.choices(string.ascii_uppercase + string.digits, k = 16))
-			
-			data['starred'] = False
-			data['timestamp'] = time.time()
-			data['status'] = 'pending'
-
-			db.child('applications').child(appid).set(data)
-			
-			apps = db.child('JDs').child(jdid).child('applications').get().val()
-			if apps:
-				apps.append(appid)
-				db.child('JDs').child(jdid).child('applications').set(apps)
-			else:
-				db.child('JDs').child(jdid).child('applications').set([appid])
-
 			apps = db.child('applicants').child(userid).child('applications').get().val()
-			if apps:
-				apps.append(appid)
-				db.child('applicants').child(userid).child('applications').set(apps)
-			else:
-				db.child('applicants').child(userid).child('applications').set([appid])
+			appid = userid+'_'+jdid
+			
+			if not apps or appid not in apps:
+				
+				data['starred'] = False
+				data['timestamp'] = time.time()
+				data['status'] = 'pending'
 
-			return {'res': 0, 'msg': 'Successful', 'appid': appid}
+				db.child('applications').child(appid).set(data)
+				
+				apps = db.child('JDs').child(jdid).child('applications').get().val()
+				if apps:
+					apps.append(appid)
+					db.child('JDs').child(jdid).child('applications').set(apps)
+				else:
+					db.child('JDs').child(jdid).child('applications').set([appid])
+
+				apps = db.child('applicants').child(userid).child('applications').get().val()
+				if apps:
+					apps.append(appid)
+					db.child('applicants').child(userid).child('applications').set(apps)
+				else:
+					db.child('applicants').child(userid).child('applications').set([appid])
+
+				return {'res': 0, 'msg': 'Successful', 'appid': appid}
+			else:
+				return {'res': 6, 'msg': 'Already Applied'}
 		else:
 			return {'res': 4, 'msg': 'JD Not Exist'}
 	else:
