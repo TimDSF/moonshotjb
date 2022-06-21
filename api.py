@@ -419,7 +419,7 @@ def getRecommendationJD():
 
 	for jdid in JDs:
 		JDs[jdid]['score'] = len(tags & set(JDs[jdid]['tags']))
-		JDs['jdid'] = jdid
+		JDs[jdid]['jdid'] = jdid
 		if 'applications' in JDs[jdid]:
 			JDs[jdid]['applications'] = len(JDs[jdid]['applications'])
 		else:
