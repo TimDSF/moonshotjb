@@ -538,6 +538,8 @@ def updateJD():
 	resume = AffindaClient.create_resume(file = f)
 	f.close()
 
+	os.remove(path)
+
 	skills = resume.as_dict()['data']['skills']
 	tags = [''] * len(skills)
 	for idx, tmp in enumerate(skills):
