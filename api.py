@@ -377,10 +377,11 @@ def readRec():
 		if 'JDs' not in recruiter:
 			recruiter['JDs'] = []
 
-		for idx, userid in enumerate(recruiter['JDs']):
-			JD = db.child('JDs').child(userid).get().val()
+		for idx, jdid in enumerate(recruiter['JDs']):
+			JD = db.child('JDs').child(jdid).get().val()
 			if JD['status']['shown']:
 				JD.pop('userid')
+				JD['jdid'] = jdid
 				recruiter['JDs'][idx] = JD
 
 		return {'res': 0, 'msg': 'Successful', 'recruiter': recruiter}
@@ -412,11 +413,13 @@ def getRecommendationJD():
 
 	JDs = dict(db.child('JDs').get().val())
 	dels = [jdid for jdid in JDs if not (jdid not in apps and JDs[jdid]['status']['shown'] and JDs[jdid]['status']['available'])]
+
 	for jdid in dels:
 		del JDs[jdid]
 
 	for jdid in JDs:
 		JDs[jdid]['score'] = len(tags & set(JDs[jdid]['tags']))
+		JDs['jdid'] = jdid
 		if 'applications' in JDs[jdid]:
 			JDs[jdid]['applications'] = len(JDs[jdid]['applications'])
 		else:
