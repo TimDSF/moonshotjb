@@ -332,7 +332,6 @@ def readApp():
 	if applicant:
 		applicant.pop('login')
 		applicant.pop('hashpw')
-		applicant.pop('resume')
 		applicant.pop('guest')
 		
 		if userid == targetid:
