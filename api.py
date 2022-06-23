@@ -294,7 +294,7 @@ def uploadLogo():
 	else:
 		return {'res': 5, 'msg': 'No Logo Uploaded'}
 
-	return {'res': 0, 'msg': 'Successful', 'tags': tags}
+	return {'res': 0, 'msg': 'Successful'}
 
 
 # download logo
@@ -309,13 +309,13 @@ def downloadLogo():
 	if res['res']:
 		return res
 
-	filename = '~/public_html/moonshotjb/logos/logo_'+targetid+'.jpg'
+	filename = '/home/ec2-user/public_html/moonshotjb/logos/logo_'+targetid+'.jpg'
 	path = os.path.join(UPLOAD_FOLDER, filename)
 
 	if not os.path.exists(path):
 		return {'res': 5, 'msg': 'Logo Not Uploaded'}
 
-	return send_from_directory(directory = UPLOAD_FOLDER, path = filename, filename = filename)
+	return 'http://ec2-52-14-66-91.us-east-2.compute.amazonaws.com/~ec2-user/moonshotjb/logos/logo_'+targetid+'.jpg'
 
 
 # update recruiter
