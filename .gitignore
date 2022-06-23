@@ -11,5 +11,5 @@ Thumbs.db
 # project specific #
 ####################
 __pycache__/
-uploads/
+uploads/*
 
