@@ -1,8 +1,10 @@
 import base64
 import bcrypt
+import glob
 import os
 import random
 import string
+import sys
 import time
 
 from affinda import AffindaAPI, TokenCredential
@@ -41,10 +43,22 @@ def login(userid, token, allowed_category):
 
 	return {'res': 0, 'msg': 'Successful', 'category': category}
 
-# test
-@api.route('/test', methods = ['GET'])
+# /
+@api.route('/', methods = ['GET'])
 def test():
-    return 'successful'
+    return '''
+    <h1> Successful </h1>
+    <p> @ River, Tim, Victor, Frank </p>
+    <p> Special thanks to Daniel </p>
+    <p> &copy; MoonShot Job Board 2022 </p>
+    '''
+
+# console
+@api.route('/console', methods = ['GET'])
+def console():
+	file = max(glob.glob('./log/*.log'))
+	log = open(file).read()
+	return '<meta http-equiv="refresh" content="30" />' + log
 
 # login applicant
 @api.route('/loginApp', methods = ['POST'])
@@ -426,8 +440,8 @@ def readRec():
 @api.route('/getRecommendationJD', methods = ['POST'])
 def getRecommendationJD():
 	data = request.form.to_dict()
-	userid = data.pop('userid')
-	token = data.pop('token')
+	userid = data.pop('userid', None)
+	token = data.pop('token', None)
 
 	res = login(userid, token, ['applicants'])
 	if res['res']:
@@ -676,6 +690,7 @@ def updateApplication():
 	db.child('applications').child(appid).child('status').set(status)
 
 	return {'res': 0, 'msg': 'Successful'}	
+    
 
 if __name__ == '__main__':
-	api.run(port = 5000, host = '0.0.0.0')
+	api.run(port = 8888, host = '0.0.0.0')
