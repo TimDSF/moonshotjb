@@ -393,8 +393,7 @@ def readRec():
 			else:
 				dels.append(idx)
 
-		for idx in dels:
-			del recruiter['JDs'][idx]
+		recruiter['JDs'] = [recruiter['JDs'][idx] for idx in range(len(recruiter['JDs'])) if idx not in dels]
 
 		return {'res': 0, 'msg': 'Successful', 'recruiter': recruiter}
 	else:
