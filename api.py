@@ -15,8 +15,8 @@ from flask_cors import CORS
 
 UPLOAD_FOLDER = './uploads'
 MAX_SIZE = 10240 # in bytes
-ALLOWED_FORMATS_RESUME = {'pdf'}
-ALLOWED_FORMATS_LOGO = {'jpg'}
+ALLOWED_FORMATS_RESUME = {'pdf', 'txt', 'doc', 'docx'}
+ALLOWED_FORMATS_LOGO = {'jpg', 'jpeg', 'png'}
 
 AffindaToken = '15197965097a1f10ac9cdcb75334b88feef21c84'
 AffindaCred = TokenCredential(token = AffindaToken)
@@ -260,8 +260,8 @@ def downloadResume():
 	if category == 'applicants' and userid != targetid:
 		return {'res': 4, 'msg': 'Permission Denied'}
 
-	filename = 'resume_'+targetid+'.pdf'
-	path = os.path.join(UPLOAD_FOLDER, filename)
+	filename = 'resume_'+targetid+'.*'
+	path = glob.glob(os.path.join(UPLOAD_FOLDER, filename))
 
 	if not os.path.exists(path):
 		return {'res': 5, 'msg': 'Resume Not Uploaded'}
@@ -309,13 +309,12 @@ def downloadLogo():
 	if res['res']:
 		return res
 
-	filename = '/home/ec2-user/public_html/moonshotjb/logos/logo_'+targetid+'.jpg'
-	path = os.path.join(UPLOAD_FOLDER, filename)
+	filename = glob.glob('/home/ec2-user/public_html/moonshotjb/logos/logo_'+targetid+'.*')
 
 	if not os.path.exists(path):
 		return {'res': 5, 'msg': 'Logo Not Uploaded'}
 
-	return {'res': 0, 'msg': 'Successful', 'logourl': 'http://ec2-52-14-66-91.us-east-2.compute.amazonaws.com/~ec2-user/moonshotjb/logos/logo_'+targetid+'.jpg'}
+	return {'res': 0, 'msg': 'Successful', 'logourl': filename}
 
 
 # update recruiter
