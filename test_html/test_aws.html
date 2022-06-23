@@ -151,6 +151,34 @@
         <br>
 
         <b>
+            uploadLogo
+        </b>
+        <form action = "http://ec2-52-14-66-91.us-east-2.compute.amazonaws.com:5000/uploadLogo" method="post" enctype="multipart/form-data">
+            <label for="userid">userid:</label>
+            <input type="text" name="userid"><br><br>
+            <label for="token">token:</label>
+            <input type="text" name="token"><br><br>
+            <label for="resume">resume:</label>
+            <input type="file" name="resume"><br><br>
+            <input type="submit" value="Submit">
+        </form>
+        <br>
+
+        <b>
+            downloadLogo
+        </b>
+        <form action = "http://ec2-52-14-66-91.us-east-2.compute.amazonaws.com:5000/downloadLogo" method="post">
+            <label for="userid">userid:</label>
+            <input type="text" name="userid"><br><br>
+            <label for="token">token:</label>
+            <input type="text" name="token"><br><br>
+            <label for="targetid">targetid:</label>
+            <input type="text" name="targetid"><br><br>
+            <input type="submit" value="Submit">
+        </form>
+        <br>
+
+        <b>
             updateRec
         </b>
         <form action = "http://ec2-52-14-66-91.us-east-2.compute.amazonaws.com:5000/updateRec" method="post">

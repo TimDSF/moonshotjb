@@ -309,9 +309,6 @@ def downloadLogo():
 	if res['res']:
 		return res
 
-	if category == 'applicants' and userid != targetid:
-		return {'res': 4, 'msg': 'Permission Denied'}
-
 	filename = '~/public_html/moonshotjb/logos/logo_'+targetid+'.jpg'
 	path = os.path.join(UPLOAD_FOLDER, filename)
 
