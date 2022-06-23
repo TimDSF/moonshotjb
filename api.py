@@ -229,6 +229,10 @@ def uploadResume():
 		elif extension not in ALLOWED_FORMATS_RESUME:
 			return {'res': 6, 'msg': 'Unsupported Resume Format'}
 		else:
+			filename_ = 'resume_'+targetid+'.*'
+			path_ = os.path.join(UPLOAD_FOLDER, filename_)
+			os.remove(path_)
+
 			path = os.path.join(UPLOAD_FOLDER, filename)
 			file.save(path)
 	else:
