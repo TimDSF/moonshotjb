@@ -1,3 +1,3 @@
 git pull
-python3.9 api.py |& tee -a "$(date +"%Y_%m_%d_%I_%M_%p").log"
+python3.9 api.py |& tee -a ./log/"$(date +"%Y/%m/%d_%H_%M_%S_%3N").log"
 
