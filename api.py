@@ -424,10 +424,10 @@ def readRec():
 @api.route('/getRecommendationJD', methods = ['POST'])
 def getRecommendationJD():
 	data = request.form.to_dict()
-	userid = data.pop('userid', None)
-	token = data.pop('token', None)
+	userid = data.pop('userid')
+	token = data.pop('token')
 
-	guest = userid == None and token == None
+	guest = userid == '' and token == ''
 	if not guest:
 		res = login(userid, token, ['applicants'])
 
