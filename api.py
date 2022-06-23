@@ -315,7 +315,7 @@ def downloadLogo():
 	if not os.path.exists(path):
 		return {'res': 5, 'msg': 'Logo Not Uploaded'}
 
-	return 'http://ec2-52-14-66-91.us-east-2.compute.amazonaws.com/~ec2-user/moonshotjb/logos/logo_'+targetid+'.jpg'
+	return {'res': 0, 'msg': 'Successful', 'logourl': 'http://ec2-52-14-66-91.us-east-2.compute.amazonaws.com/~ec2-user/moonshotjb/logos/logo_'+targetid+'.jpg'}
 
 
 # update recruiter
