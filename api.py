@@ -383,12 +383,18 @@ def readRec():
 		if 'JDs' not in recruiter:
 			recruiter['JDs'] = []
 
+		dels = []
 		for idx, jdid in enumerate(recruiter['JDs']):
 			JD = db.child('JDs').child(jdid).get().val()
-			if JD['status']['shown']:
+			if JD and JD['status']['shown']:
 				JD.pop('userid')
 				JD['jdid'] = jdid
 				recruiter['JDs'][idx] = JD
+			else:
+				dels.append(idx)
+
+		for idx in dels:
+			del recruiter['JDs'][idx]
 
 		return {'res': 0, 'msg': 'Successful', 'recruiter': recruiter}
 	else:
