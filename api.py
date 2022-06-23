@@ -680,4 +680,4 @@ def updateApplication():
     
 
 if __name__ == '__main__':
-	api.run(port = 8888, host = '0.0.0.0')
+	api.run(port = 5000, host = '0.0.0.0')
