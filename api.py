@@ -263,8 +263,10 @@ def downloadResume():
 	filename = 'resume_'+targetid+'.*'
 	path = glob.glob(os.path.join(UPLOAD_FOLDER, filename))
 
-	if not os.path.exists(path):
+	if len(path) == 0:
 		return {'res': 5, 'msg': 'Resume Not Uploaded'}
+
+	filename = path.split('/')[-1]
 
 	return send_from_directory(directory = UPLOAD_FOLDER, path = filename, filename = filename)
 
