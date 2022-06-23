@@ -58,7 +58,7 @@ def test():
 @api.route('/console', methods = ['GET'])
 def console():
 	file = max(glob.glob('./log/*.log'))
-	log = open(file).read()
+	log = open(file).read().replace('\n', '<br>')
 	return '<meta http-equiv="refresh" content="30" />' + log
 
 # login applicant
