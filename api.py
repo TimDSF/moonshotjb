@@ -231,7 +231,8 @@ def uploadResume():
 		else:
 			filename_ = 'resume_'+userid+'.*'
 			path_ = os.path.join(UPLOAD_FOLDER, filename_)
-			os.remove(path_)
+			for path in glob.glob(path_):
+				os.remove(path)
 
 			path = os.path.join(UPLOAD_FOLDER, filename)
 			file.save(path)
