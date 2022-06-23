@@ -325,7 +325,7 @@ def downloadLogo():
 
 	if len(paths) == 0:
 		return {'res': 5, 'msg': 'Logo Not Uploaded'}
-	path = 'http://ec2-52-14-66-91.us-east-2.compute.amazonaws.com/~ec2-user/moonshotjb/' + paths[0].split('/')[-1]
+	path = 'http://ec2-52-14-66-91.us-east-2.compute.amazonaws.com/~ec2-user/moonshotjb/logos/' + paths[0].split('/')[-1]
 	return {'res': 0, 'msg': 'Successful', 'logourl': path}
 
 
