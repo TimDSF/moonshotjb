@@ -266,12 +266,12 @@ def downloadResume():
 		return {'res': 4, 'msg': 'Permission Denied'}
 
 	filename = 'resume_'+targetid+'.*'
-	path = glob.glob(os.path.join(UPLOAD_FOLDER, filename))
+	paths = glob.glob(os.path.join(UPLOAD_FOLDER, filename))
 
-	if len(path) == 0:
+	if len(paths) == 0:
 		return {'res': 5, 'msg': 'Resume Not Uploaded'}
 
-	filename = path[0].split('/')[-1]
+	filename = paths[0].split('/')[-1]
 
 	return send_from_directory(directory = UPLOAD_FOLDER, path = filename, filename = filename)
 
@@ -296,6 +296,11 @@ def uploadLogo():
 		elif extension not in ALLOWED_FORMATS_LOGO:
 			return {'res': 6, 'msg': 'Unsupported Logo Format'}
 		else:
+			filename_ = 'logo_'+userid+'.*'
+			path_ = '/home/ec2-user/public_html/moonshotjb/logos/' + filename_
+			for path in glob.glob(path_):
+				os.remove(path)
+
 			path = '/home/ec2-user/public_html/moonshotjb/logos/' + filename
 			file.save(path)
 	else:
@@ -316,12 +321,12 @@ def downloadLogo():
 	if res['res']:
 		return res
 
-	filename = glob.glob('/home/ec2-user/public_html/moonshotjb/logos/logo_'+targetid+'.*')
+	paths = glob.glob('/home/ec2-user/public_html/moonshotjb/logos/logo_'+targetid+'.*')
 
-	if not os.path.exists(path):
+	if len(paths) == 0:
 		return {'res': 5, 'msg': 'Logo Not Uploaded'}
 
-	return {'res': 0, 'msg': 'Successful', 'logourl': filename}
+	return {'res': 0, 'msg': 'Successful', 'logourl': paths[0]}
 
 
 # update recruiter
