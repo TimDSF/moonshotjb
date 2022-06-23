@@ -429,7 +429,7 @@ def readRec():
 
 		return {'res': 0, 'msg': 'Successful', 'recruiter': recruiter}
 	else:
-		return {'res': 4, 'msg': 'Target Not Found'}
+		return {'res': 5, 'msg': 'Target Not Found'}
 
 # getRecommendationJD
 @api.route('/getRecommendationJD', methods = ['POST'])
@@ -443,7 +443,8 @@ def getRecommendationJD():
 		res = login(userid, token, ['applicants'])
 
 		if res['res']:
-			return res
+			if res['res'] != 3:
+				return res
 	
 	if userid:
 		tags = db.child('applicants').child(userid).child('tags').get().val()
@@ -481,7 +482,7 @@ def getRecommendationJD():
 			JDs[jdid]['applications'] = 0
 
 	recommendations = sorted(list(JDs.values()), key = lambda x: x['score'], reverse = True)
-	return {'res': 0, 'msg': 'Successful', 'JDs': recommendations}
+	return {'res': res['res'], 'msg': 'Successful', 'JDs': recommendations}
 
 # readJD
 @api.route('/readJD', methods = ['POST'])
@@ -627,7 +628,7 @@ def submitApplication():
 			else:
 				return {'res': 6, 'msg': 'Already Applied'}
 		else:
-			return {'res': 4, 'msg': 'JD Not Available'}
+			return {'res': 7, 'msg': 'JD Not Available'}
 	else:
 		return {'res': 5, 'msg': 'JD Not Exist'}
 
@@ -663,7 +664,7 @@ def viewApplication():
 			else:
 				return {'res': 6, 'msg': 'Permission Denied: JD Not Yours'}
 	else:
-		return {'res': 4, 'msg': 'Application Not Exist'}
+		return {'res': 8, 'msg': 'Application Not Exist'}
 
 # updateApplication
 @api.route('/updateApplication', methods = ['POST'])
