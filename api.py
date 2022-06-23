@@ -15,7 +15,8 @@ from flask_cors import CORS
 
 UPLOAD_FOLDER = './uploads'
 MAX_SIZE = 10240 # in bytes
-ALLOWED_FORMATS = {'pdf'}
+ALLOWED_FORMATS_RESUME = {'pdf'}
+ALLOWED_FORMATS_LOGO = {'jpg'}
 
 AffindaToken = '15197965097a1f10ac9cdcb75334b88feef21c84'
 AffindaCred = TokenCredential(token = AffindaToken)
@@ -225,7 +226,7 @@ def uploadResume():
 
 		if not file or file.filename == '':
 			return {'res': 5, 'msg': 'No Resume Uploaded'}
-		elif extension not in ALLOWED_FORMATS:
+		elif extension not in ALLOWED_FORMATS_RESUME:
 			return {'res': 6, 'msg': 'Unsupported Resume Format'}
 		else:
 			path = os.path.join(UPLOAD_FOLDER, filename)
@@ -274,36 +275,24 @@ def uploadLogo():
 	userid = data.pop('userid')
 	token = data.pop('token')
 
-	if db.child('applicants').child(userid).get().val():
-		if token != db.child('applicants').child(userid).child('login').child('token').get().val():
-			return {'res': 2, 'msg': 'Mismatch Token'}
-		elif time.time() > db.child('applicants').child(userid).child('login').child('expiration').get().val():
-			return {'res': 3, 'msg': 'Session Expired'}			
-	else:
-		return {'res': 1, 'msg': 'User Not Registered'}
+	res = login(userid, token, ['recruiters'])
+	if res['res']:
+		return res
 
-	if 'resume' in request.files:
-		file = request.files['resume']
+	if 'logo' in request.files:
+		file = request.files['logo']
 		extension = file.filename.split('.')[-1]
-		filename = 'resume_'+userid+'.'+extension
+		filename = 'logo_'+userid+'.'+extension
 
 		if not file or file.filename == '':
-			return {'res': 5, 'msg': 'No Resume Uploaded'}
-		elif extension not in ALLOWED_FORMATS:
-			return {'res': 6, 'msg': 'Unsupported Resume Format'}
+			return {'res': 5, 'msg': 'No Logo Uploaded'}
+		elif extension not in ALLOWED_FORMATS_LOGO:
+			return {'res': 6, 'msg': 'Unsupported Logo Format'}
 		else:
-			path = os.path.join(UPLOAD_FOLDER, filename)
+			path = '~/public_html/moonshotjb/logos/' + filename
 			file.save(path)
 	else:
-		return {'res': 5, 'msg': 'No Resume Uploaded'}
-
-	file2 = open(path, 'rb')
-	resume = AffindaClient.create_resume(file = file2)
-
-	skills = resume.as_dict()['data']['skills']
-	tags = [''] * len(skills)
-	for idx, tmp in enumerate(skills):
-		tags[idx] = tmp['name']
+		return {'res': 5, 'msg': 'No Logo Uploaded'}
 
 	return {'res': 0, 'msg': 'Successful', 'tags': tags}
 
@@ -316,20 +305,18 @@ def downloadLogo():
 	token = data.pop('token')
 	targetid = data.pop('targetid')
 
-	
 	res = login(userid, token, ['applicants', 'recruiters'])
 	if res['res']:
 		return res
 
-	category = res['category']
 	if category == 'applicants' and userid != targetid:
 		return {'res': 4, 'msg': 'Permission Denied'}
 
-	filename = 'resume_'+targetid+'.pdf'
+	filename = '~/public_html/moonshotjb/logos/logo_'+targetid+'.jpg'
 	path = os.path.join(UPLOAD_FOLDER, filename)
 
 	if not os.path.exists(path):
-		return {'res': 5, 'msg': 'Resume Not Uploaded'}
+		return {'res': 5, 'msg': 'Logo Not Uploaded'}
 
 	return send_from_directory(directory = UPLOAD_FOLDER, path = filename, filename = filename)
 
