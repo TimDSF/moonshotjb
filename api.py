@@ -289,7 +289,7 @@ def uploadLogo():
 		elif extension not in ALLOWED_FORMATS_LOGO:
 			return {'res': 6, 'msg': 'Unsupported Logo Format'}
 		else:
-			path = '~/public_html/moonshotjb/logos/' + filename
+			path = '/home/ec2-user/public_html/moonshotjb/logos/' + filename
 			file.save(path)
 	else:
 		return {'res': 5, 'msg': 'No Logo Uploaded'}
