@@ -22,7 +22,24 @@ AffindaClient = AffindaAPI(credential = AffindaCred)
 api = Flask(__name__)
 api.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 api.config['MAX_CONTENT_PATH'] = MAX_SIZE
-# CORS(api)
+
+def login(userid, token, allowed_category):
+	if db.child('applicants').child(userid).get().val():
+		category = 'applicants'	
+	elif db.child('recruiters').child(userid).get().val():
+		category = 'recruiters'
+	else:
+		return {'res': 1, 'msg': 'User Not Registered'}
+
+	if category not in allowed_category:
+		return {'res': 4, 'msg': 'Permission Denied'}
+
+	if token != db.child(category).child(userid).child('login').child('token').get().val():
+		return {'res': 2, 'msg': 'Mismatch Token'}
+	elif time.time() > db.child(category).child(userid).child('login').child('expiration').get().val():
+		return {'res': 3, 'msg': 'Session Expired'}
+
+	return {'res': 0, 'msg': 'Successful', 'category': category}
 
 # test
 @api.route('/test', methods = ['GET'])
@@ -51,7 +68,7 @@ def loginApp():
 		else:
 			return {'res': 2, 'msg': 'Wrong Password'}
 	else:
-		return {'res': 1, 'msg': 'Username Not Registrated'}
+		return {'res': 1, 'msg': 'Username Not Registrated As An Applicant'}
 
 # signup applicant
 @api.route('/signupApp', methods = ['POST'])
@@ -76,6 +93,52 @@ def signupApp():
 		db.child('applicants').child(userid).set(data)
 		return {'res': 0, 'msg': 'Successful', 'token': token}
 
+# login recruiter
+@api.route('/loginRec', methods = ['POST'])
+def loginRec():
+	userid = request.form.get('userid')
+	passwd = request.form.get('passwd').encode('utf-8')
+
+	recruiters = db.child('recruiters').child(userid).get().val()
+
+	if recruiters:
+		if bcrypt.checkpw(passwd, recruiters['hashpw'].encode('utf-8')):
+			token = ''.join(random.choices(string.ascii_uppercase + string.digits, k = 32))
+			data = {
+				'login': {
+					'token': token,
+					'expiration': time.time() + 86400
+				}
+			}
+			db.child('recruiters').child(userid).update(data)
+			return {'res': 0, 'msg': 'Successful', 'token': token}
+		else:
+			return {'res': 2, 'msg': 'Wrong Password'}
+	else:
+		return {'res': 1, 'msg': 'Username Not Registrated As A Recruiter'}
+
+# signup recruiter
+@api.route('/signupRec', methods = ['POST'])
+def signupRec():
+	userid = request.form.get('userid')
+	passwd = request.form.get('passwd').encode('utf-8')
+	
+	if db.child('recruiters').child(userid).get().val():
+		return {'res': 1, 'msg': 'User ID Occupied'}
+	else:
+		hashpw = bcrypt.hashpw(passwd, bcrypt.gensalt()).decode('utf-8')
+		token = ''.join(random.choices(string.ascii_uppercase + string.digits, k = 32))
+		print(hashpw, token)
+		data = {
+				'hashpw': hashpw,
+				'login': {
+					'token': token,
+					'expiration': time.time() + 86400
+				}
+		}
+		db.child('recruiters').child(userid).set(data)
+		return {'res': 0, 'msg': 'Successful', 'token': token}
+
 # signup guest
 @api.route('/signupGuest', methods = ['POST'])
 def signupGuest():
@@ -84,7 +147,6 @@ def signupGuest():
 	if db.child('applicants').child(userid).get().val():
 		return {'res': 1, 'msg': 'User ID Occupied'}
 	else:
-		
 		data = {
 				'guest': True
 			}
@@ -95,7 +157,13 @@ def signupGuest():
 @api.route('/updateApp', methods = ['POST'])
 def updateApp():
 	data = request.form.to_dict()
+	userid = data.pop('userid')
+	token = data.pop('token')
 
+	res = login(userid, token, ['applicants'])
+	if res['res']:
+		return res
+	
 	data.pop('tag[]', None)
 	data['tags'] = request.form.getlist('tag[]')
 
@@ -120,26 +188,74 @@ def updateApp():
 		'personalWebsite': data.pop('personalWebsite', None)
 	}
 	data['applications'] = []
-	
-	userid = data.pop('userid')
-	token = data.pop('token')
 
-	if db.child('applicants').child(userid).get().val():
-		if token != db.child('applicants').child(userid).child('login').child('token').get().val():
-			return {'res': 2, 'msg': 'Mismatch Token'}
-		elif time.time() > db.child('applicants').child(userid).child('login').child('expiration').get().val():
-			return {'res': 3, 'msg': 'Session Expired'}
-		else:
-			db.child('applicants').child(userid).update(data)
-		
-			return {'res': 0, 'msg': 'Successful'}
-	else:
-		return {'res': 1, 'msg': 'User Not Registered'}
+	db.child('applicants').child(userid).update(data)
 
+	return {'res': 0, 'msg': 'Successful'}
 
 # upload resume
 @api.route('/uploadResume', methods = ['POST'])
 def uploadResume():	
+	data = request.form.to_dict()
+	userid = data.pop('userid')
+	token = data.pop('token')
+
+	res = login(userid, token, ['applicants'])
+	if res['res']:
+		return res
+
+	if 'resume' in request.files:
+		file = request.files['resume']
+		extension = file.filename.split('.')[-1]
+		filename = 'resume_'+userid+'.'+extension
+
+		if not file or file.filename == '':
+			return {'res': 5, 'msg': 'No Resume Uploaded'}
+		elif extension not in ALLOWED_FORMATS:
+			return {'res': 6, 'msg': 'Unsupported Resume Format'}
+		else:
+			path = os.path.join(UPLOAD_FOLDER, filename)
+			file.save(path)
+	else:
+		return {'res': 5, 'msg': 'No Resume Uploaded'}
+
+	file2 = open(path, 'rb')
+	resume = AffindaClient.create_resume(file = file2)
+
+	skills = resume.as_dict()['data']['skills']
+	tags = [''] * len(skills)
+	for idx, tmp in enumerate(skills):
+		tags[idx] = tmp['name']
+
+	return {'res': 0, 'msg': 'Successful', 'tags': tags}
+
+# download resume
+@api.route('/downloadResume', methods = ['POST'])
+def downloadResume():
+	data = request.form.to_dict()
+	userid = data.pop('userid')
+	token = data.pop('token')
+	targetid = data.pop('targetid')
+	
+	res = login(userid, token, ['applicants', 'recruiters'])
+	if res['res']:
+		return res
+
+	category = res['category']
+	if category == 'applicants' and userid != targetid:
+		return {'res': 4, 'msg': 'Permission Denied'}
+
+	filename = 'resume_'+targetid+'.pdf'
+	path = os.path.join(UPLOAD_FOLDER, filename)
+
+	if not os.path.exists(path):
+		return {'res': 5, 'msg': 'Resume Not Uploaded'}
+
+	return send_from_directory(directory = UPLOAD_FOLDER, path = filename, filename = filename)
+
+# upload logo
+@api.route('/uploadLogo', methods = ['POST'])
+def uploadLogo():	
 	data = request.form.to_dict()
 	userid = data.pop('userid')
 	token = data.pop('token')
@@ -158,14 +274,14 @@ def uploadResume():
 		filename = 'resume_'+userid+'.'+extension
 
 		if not file or file.filename == '':
-			return {'res': 4, 'msg': 'No Resume Uploaded'}
+			return {'res': 5, 'msg': 'No Resume Uploaded'}
 		elif extension not in ALLOWED_FORMATS:
-			return {'res': 5, 'msg': 'Unsupported Resume Format'}
+			return {'res': 6, 'msg': 'Unsupported Resume Format'}
 		else:
 			path = os.path.join(UPLOAD_FOLDER, filename)
 			file.save(path)
 	else:
-		return {'res': 4, 'msg': 'No Resume Uploaded'}
+		return {'res': 5, 'msg': 'No Resume Uploaded'}
 
 	file2 = open(path, 'rb')
 	resume = AffindaClient.create_resume(file = file2)
@@ -178,26 +294,20 @@ def uploadResume():
 	return {'res': 0, 'msg': 'Successful', 'tags': tags}
 
 
-# download resume
-@api.route('/downloadResume', methods = ['POST'])
-def downloadResume():
+# download logo
+@api.route('/downloadLogo', methods = ['POST'])
+def downloadLogo():
 	data = request.form.to_dict()
 	userid = data.pop('userid')
 	token = data.pop('token')
 	targetid = data.pop('targetid')
 
-	if db.child('applicants').child(userid).get().val():
-		category = 'applicants'	
-	elif db.child('recruiters').child(userid).get().val():
-		category = 'recruiters'
-	else:
-		return {'res': 1, 'msg': 'User Not Registered'}
+	
+	res = login(userid, token, ['applicants', 'recruiters'])
+	if res['res']:
+		return res
 
-	if token != db.child(category).child(userid).child('login').child('token').get().val():
-		return {'res': 2, 'msg': 'Mismatch Token'}
-	elif time.time() > db.child(category).child(userid).child('login').child('expiration').get().val():
-		return {'res': 3, 'msg': 'Session Expired'}
-
+	category = res['category']
 	if category == 'applicants' and userid != targetid:
 		return {'res': 4, 'msg': 'Permission Denied'}
 
@@ -209,84 +319,34 @@ def downloadResume():
 
 	return send_from_directory(directory = UPLOAD_FOLDER, path = filename, filename = filename)
 
-# login recruiter
-@api.route('/loginRec', methods = ['POST'])
-def loginRec():
-	userid = request.form.get('userid')
-	passwd = request.form.get('passwd').encode('utf-8')
-
-	recruiters = db.child('recruiters').child(userid).get().val()
-
-	if recruiters:
-		if bcrypt.checkpw(passwd, recruiters['hashpw'].encode('utf-8')):
-			token = ''.join(random.choices(string.ascii_uppercase + string.digits, k = 32))
-			data = {
-				'login': {
-					'token': token,
-					'expiration': time.time() + 86400
-				}
-			}
-			db.child('recruiters').child(userid).update(data)
-			return {'res': 0, 'msg': 'Successful', 'token': token}
-		else:
-			return {'res': 2, 'msg': 'Wrong Password'}
-	else:
-		return {'res': 1, 'msg': 'Username Not Registrated'}
-
-# signup recruiter
-@api.route('/signupRec', methods = ['POST'])
-def signupRec():
-	userid = request.form.get('userid')
-	passwd = request.form.get('passwd').encode('utf-8')
-	
-	if db.child('recruiters').child(userid).get().val():
-		return {'res': 1, 'msg': 'User ID Occupied'}
-	else:
-		hashpw = bcrypt.hashpw(passwd, bcrypt.gensalt()).decode('utf-8')
-		token = ''.join(random.choices(string.ascii_uppercase + string.digits, k = 32))
-		print(hashpw, token)
-		data = {
-				'hashpw': hashpw,
-				'login': {
-					'token': token,
-					'expiration': time.time() + 86400
-				}
-		}
-		db.child('recruiters').child(userid).set(data)
-		return {'res': 0, 'msg': 'Successful', 'token': token}
 
 # update recruiter
 @api.route('/updateRec', methods = ['POST'])
 def updateRec():
 	data = request.form.to_dict()
+	userid = data.pop('userid')
+	token = data.pop('token')
 
+	res = login(userid, token, ['recruiters'])
+	if res['res']:
+		return res
+
+	data['verified'] = False
 	data['contacts'] = {
 		'name': data.pop('name', None),
 		'phone': data.pop('phone', None),
 		'email': data.pop('email', None)
 	}
-	
 	data['companyDescription'] = {
 		'description': data.pop('description', None),
 		'background': data.pop('background', None),
 		'financing': data.pop('financing', None),
 	}
-	data['verified'] = False
-	userid = data.pop('userid')
-	token = data.pop('token')
 
-	if db.child('recruiters').child(userid).get().val():
-		if token != db.child('recruiters').child(userid).child('login').child('token').get().val():
-			return {'res': 2, 'msg': 'Mismatch Token'}
-		elif time.time() > db.child('recruiters').child(userid).child('login').child('expiration').get().val():
-			return {'res': 3, 'msg': 'Session Expired'}
-		else:
-			db.child('recruiters').child(userid).update(data)
+	db.child('recruiters').child(userid).update(data)
 
-			return {'res': 0, 'msg': 'Successful', 'data': data}
-	else:
-		return {'res': 1, 'msg': 'User Not Registered'}
-
+	return {'res': 0, 'msg': 'Successful'}
+	
 # readApp 
 @api.route('/readApp', methods = ['POST'])
 def readApp():
@@ -295,17 +355,9 @@ def readApp():
 	token = data.pop('token')
 	targetid = data.pop('targetid')
 
-	if db.child('applicants').child(userid).get().val():
-		category = 'applicants'	
-	elif db.child('recruiters').child(userid).get().val():
-		category = 'recruiters'
-	else:
-		return {'res': 1, 'msg': 'User Not Registered'}
-
-	if token != db.child(category).child(userid).child('login').child('token').get().val():
-		return {'res': 2, 'msg': 'Mismatch Token'}
-	elif time.time() > db.child(category).child(userid).child('login').child('expiration').get().val():
-		return {'res': 3, 'msg': 'Session Expired'}
+	res = login(userid, token, ['applicants', 'recruiters'])
+	if res['res']:
+		return res
 
 	applicant = db.child('applicants').child(targetid).get().val()
 	if applicant:
@@ -331,7 +383,7 @@ def readApp():
 
 		return {'res': 0, 'msg': 'Successful', 'applicant': applicant}
 	else:
-		return {'res': 4, 'msg': 'Target Not Found'}
+		return {'res': 5, 'msg': 'Target Not Found'}
 
 
 # readRec 
@@ -342,17 +394,9 @@ def readRec():
 	token = data.pop('token')
 	targetid = data.pop('targetid')
 
-	if db.child('applicants').child(userid).get().val():
-		category = 'applicants'
-	elif db.child('recruiters').child(userid).get().val():
-		category = 'recruiters'
-	else:
-		return {'res': 1, 'msg': 'User Not Registered'}
-
-	if token != db.child(category).child(userid).child('login').child('token').get().val():
-		return {'res': 2, 'msg': 'Mismatch Token'}
-	elif time.time() > db.child(category).child(userid).child('login').child('expiration').get().val():
-		return {'res': 3, 'msg': 'Session Expired'}
+	res = login(userid, token, ['applicants', 'recruiters'])
+	if res['res']:
+		return res
 
 	recruiter = db.child('recruiters').child(targetid).get().val()
 	if recruiter:
@@ -385,12 +429,9 @@ def getRecommendationJD():
 	userid = data.pop('userid')
 	token = data.pop('token')
 
-	if not db.child('applicants').child(userid).get().val():
-		return {'res': 1, 'msg': 'User Not Registered'}
-	if token != db.child('applicants').child(userid).child('login').child('token').get().val():
-		return {'res': 2, 'msg': 'Mismatch Token'}
-	elif time.time() > db.child('applicants').child(userid).child('login').child('expiration').get().val():
-		return {'res': 3, 'msg': 'Session Expired'}
+	res = login(userid, token, ['applicants'])
+	if res['res']:
+		return res
 
 	tags = db.child('applicants').child(userid).child('tags').get().val()
 	if not tags:
@@ -408,7 +449,12 @@ def getRecommendationJD():
 		del JDs[jdid]
 
 	for jdid in JDs:
-		JDs[jdid]['score'] = len(tags & set(JDs[jdid]['tags']))
+		JDTags = JDs[jdid]['tags']
+		if not JDTags:
+			JDTags = []
+		JDTags = set(JDTags)
+
+		JDs[jdid]['score'] = len(tags & JDTags)
 		JDs[jdid]['jdid'] = jdid
 		if 'applications' in JDs[jdid]:
 			JDs[jdid]['applications'] = len(JDs[jdid]['applications'])
@@ -426,17 +472,9 @@ def readJD():
 	token = data.pop('token')
 	jdid = data.pop('jdid')
 
-	if db.child('applicants').child(userid).get().val():
-		category = 'applicants'
-	elif db.child('recruiters').child(userid).get().val():
-		category = 'recruiters'
-	else:
-		return {'res': 1, 'msg': 'User Not Registered'}
-
-	if token != db.child(category).child(userid).child('login').child('token').get().val():
-		return {'res': 2, 'msg': 'Mismatch Token'}
-	elif time.time() > db.child(category).child(userid).child('login').child('expiration').get().val():
-		return {'res': 3, 'msg': 'Session Expired'}
+	res = login(userid, token, ['applicants', 'recruiters'])
+	if res['res']:
+		return res
 
 	JD = db.child('JDs').child(jdid).get().val()
 
@@ -454,7 +492,7 @@ def readJD():
 		
 		return {'res': 0, 'msg': 'Successful', 'JD': JD}
 	else:
-		return {'res': 4, 'msg': 'JD Does Not Exist'}
+		return {'res': 6, 'msg': 'JD Does Not Exist'}
 
 
 # updateJD
@@ -463,6 +501,10 @@ def updateJD():
 	data = request.form.to_dict()
 	userid = data['userid']
 	token = data.pop('token')
+
+	res = login(userid, token, ['recruiters'])
+	if res['res']:
+		return res
 
 	data['shown'] = True if data['shown'] == 'true' else False
 	data['available'] = True if data['available'] == 'true' else False
@@ -475,16 +517,6 @@ def updateJD():
 	data['tags'] = request.form.getlist('tag[]')
 	
 	data['workAuth'] = True if data['workAuth'] == 'true' else False	
-
-	if db.child('recruiters').child(userid).get().val():
-		if token != db.child('recruiters').child(userid).child('login').child('token').get().val():
-			return {'res': 2, 'msg': 'Mismatch Token'}
-		elif time.time() > db.child('recruiters').child(userid).child('login').child('expiration').get().val():
-			return {'res': 3, 'msg': 'Session Expired'}
-	elif db.child('applicants').child(userid).get().val():
-		return {'res': 5, 'msg': 'Permission Denied: User is not a recruiter'}
-	else:
-		return {'res': 1, 'msg': 'User Not Registered'}
 
 	if 'jdid' in data and data['jdid'] != "": # if the jb exists and need update
 		jdid = data.pop('jdid')
@@ -540,13 +572,9 @@ def submitApplication():
 	token = data.pop('token')
 	jdid = data['jdid']
 
-	if db.child('applicants').child(userid).get().val():
-		if token != db.child('applicants').child(userid).child('login').child('token').get().val():
-			return {'res': 2, 'msg': 'Mismatch Token'}
-		elif time.time() > db.child('applicants').child(userid).child('login').child('expiration').get().val():
-			return {'res': 3, 'msg': 'Session Expired'}
-	else:
-		return {'res': 1, 'msg': 'User Not Registered'}
+	res = login(userid, token, ['applicants'])
+	if res['res']:
+		return res
 
 	jd = db.child('JDs').child(jdid).get().val()
 	if jd:
@@ -580,7 +608,7 @@ def submitApplication():
 			else:
 				return {'res': 6, 'msg': 'Already Applied'}
 		else:
-			return {'res': 4, 'msg': 'JD Not Exist'}
+			return {'res': 4, 'msg': 'JD Not Available'}
 	else:
 		return {'res': 5, 'msg': 'JD Not Exist'}
 
@@ -593,17 +621,11 @@ def viewApplication():
 	token = data.pop('token')
 	appid = data.pop('appid')
 
-	if db.child('applicants').child(userid).get().val():
-		category = 'applicants'
-	elif db.child('recruiters').child(userid).get().val():
-		category = 'recruiters'
-	else:
-		return {'res': 1, 'msg': 'User Not Registered'}
+	res = login(userid, token, ['applicants', 'recruiters'])
+	if res['res']:
+		return res
 
-	if token != db.child(category).child(userid).child('login').child('token').get().val():
-		return {'res': 2, 'msg': 'Mismatch Token'}
-	elif time.time() > db.child(category).child(userid).child('login').child('expiration').get().val():
-		return {'res': 3, 'msg': 'Session Expired'}
+	category = res['category']
 
 	app = db.child('applications').child(appid).get().val()
 	if app:
@@ -611,13 +633,16 @@ def viewApplication():
 			if app['userid'] == userid:
 				return {'res': 0, 'msg': 'Successful', 'application': app}
 			else:
-				return {'res': 5, 'msg': 'Application Not Yours'}
+				return {'res': 5, 'msg': 'Permission Denied: Application Not Yours'}
 		else:
 			JDs = db.child('recruiters').child(userid).child('JDs').get().val()
 			if JDs and app['jdid'] in JDs:
-				return {'res': 0, 'msg': 'Successful', 'application': app}
+				if app['status'] == 'withdrawn':
+					return {'res': 7, 'msg': 'Application Withdrawn'}
+				else:
+					return {'res': 0, 'msg': 'Successful', 'application': app}
 			else:
-				return {'res': 6, 'msg': 'JD Not Yours'}
+				return {'res': 6, 'msg': 'Permission Denied: JD Not Yours'}
 	else:
 		return {'res': 4, 'msg': 'Application Not Exist'}
 
@@ -630,28 +655,22 @@ def updateApplication():
 	appid = data.pop('appid')
 	status = data.pop('status')
 
-	if db.child('applicants').child(userid).get().val():
-		category = 'applicants'
-	elif db.child('recruiters').child(userid).get().val():
-		category = 'recruiters'
-	else:
-		return {'res': 1, 'msg': 'User Not Registered'}
+	res = login(userid, token, ['applicants', 'recruiters'])
+	if res['res']:
+		return res
 
-	if token != db.child(category).child(userid).child('login').child('token').get().val():
-		return {'res': 2, 'msg': 'Mismatch Token'}
-	elif time.time() > db.child(category).child(userid).child('login').child('expiration').get().val():
-		return {'res': 3, 'msg': 'Session Expired'}
+	category = res['category']
 
 	app = db.child('applications').child(appid).get().val()
 	if not app:
 		return {'res': 5, 'msg': 'Application Not Exist'}
 
 	if category == 'recruiters':
-		if status not in ['accepted', 'rejected'] or userid != db.child('JDs').child(app['jdid']).child('userid').get().val():
+		if app['status'] != 'pending' or status not in ['accepted', 'rejected'] or userid != db.child('JDs').child(app['jdid']).child('userid').get().val():
 			return {'res': 4, 'msg': 'Permission Deinied'}
 	else:
 		apps = db.child('applicants').child(userid).child('applications').get().val()
-		if status != 'withdrawn' or not apps or appid not in apps:
+		if status != 'pending' or not apps or appid not in apps:
 			return {'res': 4, 'msg': 'Permission Deinied'}
 
 	db.child('applications').child(appid).child('status').set(status)
@@ -659,4 +678,4 @@ def updateApplication():
 	return {'res': 0, 'msg': 'Successful'}	
 
 if __name__ == '__main__':
-	api.run(port = 8888)
+	api.run(port = 8888, host = '0.0.0.0')
