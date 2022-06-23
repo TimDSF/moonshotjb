@@ -139,9 +139,7 @@ def updateApp():
 
 # upload resume
 @api.route('/uploadResume', methods = ['POST'])
-def uploadResume():
-	use_base64 = False
-	
+def uploadResume():	
 	data = request.form.to_dict()
 	userid = data.pop('userid')
 	token = data.pop('token')
@@ -154,39 +152,20 @@ def uploadResume():
 	else:
 		return {'res': 1, 'msg': 'User Not Registered'}
 
-	if use_base64:
-		resume = data.pop('resume')
-		if resume:
-			# this part is not working on Retool
-			print(resume)
-			print(type(resume))
-			# file = base64.b64decode(resume)
-			filename = 'resume_'+userid+'.pdf'
+	if 'resume' in request.files:
+		file = request.files['resume']
+		extension = file.filename.split('.')[-1]
+		filename = 'resume_'+userid+'.'+extension
+
+		if not file or file.filename == '':
+			return {'res': 4, 'msg': 'No Resume Uploaded'}
+		elif extension not in ALLOWED_FORMATS:
+			return {'res': 5, 'msg': 'Unsupported Resume Format'}
+		else:
 			path = os.path.join(UPLOAD_FOLDER, filename)
-			b = base64.b64decode(resume)
-			print(b)
-			print(type(b))
-
-			f = open(path, "wb")
-			f.write(b)
-			f.close()
-		else:
-			return {'res': 4, 'msg': 'No Resume Uploaded'}
+			file.save(path)
 	else:
-		if 'resume' in request.files:
-			file = request.files['resume']
-			extension = file.filename.split('.')[-1]
-			filename = 'resume_'+userid+'.'+extension
-
-			if not file or file.filename == '':
-				return {'res': 4, 'msg': 'No Resume Uploaded'}
-			elif extension not in ALLOWED_FORMATS:
-				return {'res': 5, 'msg': 'Unsupported Resume Format'}
-			else:
-				path = os.path.join(UPLOAD_FOLDER, filename)
-				file.save(path)
-		else:
-			return {'res': 4, 'msg': 'No Resume Uploaded'}
+		return {'res': 4, 'msg': 'No Resume Uploaded'}
 
 	file2 = open(path, 'rb')
 	resume = AffindaClient.create_resume(file = file2)
