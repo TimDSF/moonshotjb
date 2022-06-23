@@ -221,7 +221,7 @@ def uploadResume():
 
 	if 'resume' in request.files:
 		file = request.files['resume']
-		extension = file.filename.split('.')[-1]
+		extension = file.filename.split('.')[-1].lower()
 		filename = 'resume_'+userid+'.'+extension
 
 		if not file or file.filename == '':
@@ -281,7 +281,7 @@ def uploadLogo():
 
 	if 'logo' in request.files:
 		file = request.files['logo']
-		extension = file.filename.split('.')[-1]
+		extension = file.filename.split('.')[-1].lower()
 		filename = 'logo_'+userid+'.'+extension
 
 		if not file or file.filename == '':
