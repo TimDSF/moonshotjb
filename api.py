@@ -456,8 +456,9 @@ def getRecommendationJD():
 		del JDs[jdid]
 
 	for jdid in JDs:
-		JDTags = JDs[jdid]['tags']
-		if not JDTags:
+		if 'tags' in JDs[jdid]:
+			JDTags = JDs[jdid]['tags']
+		else:
 			JDTags = []
 		JDTags = set(JDTags)
 
