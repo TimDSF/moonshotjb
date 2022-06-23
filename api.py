@@ -50,7 +50,7 @@ def test():
     return '''
     <h1> Successful </h1>
     <p> @ River, Tim, Victor, Frank </p>
-    <p> Special thanks to Daniel </p>
+    <p> !! Special thanks to Daniel </p>
     <p> &copy; MoonShot Job Board 2022 </p>
     '''
 
