@@ -427,16 +427,25 @@ def getRecommendationJD():
 	userid = data.pop('userid', None)
 	token = data.pop('token', None)
 
-	res = login(userid, token, ['applicants'])
-	if res['res']:
-		return res
+	guest = userid == None and token == None
+	if not guest:
+		res = login(userid, token, ['applicants'])
 
-	tags = db.child('applicants').child(userid).child('tags').get().val()
+		if res['res']:
+			return res
+	
+	if userid:
+		tags = db.child('applicants').child(userid).child('tags').get().val()
+	else:
+		tags = []
 	if not tags:
 		tags = []
 	tags = set(tags)
 		
-	apps = db.child('applicants').child(userid).child('applications').get().val()
+	if userid:
+		apps = db.child('applicants').child(userid).child('applications').get().val()
+	else:
+		apps = []
 	if not apps:
 		apps = []
 
@@ -459,8 +468,8 @@ def getRecommendationJD():
 		else:
 			JDs[jdid]['applications'] = 0
 
-	recommentations = sorted(list(JDs.values()), key = lambda x: x['score'], reverse = True)
-	return {'res': 0, 'msg': 'Successful', 'JDs': recommentations}
+	recommendations = sorted(list(JDs.values()), key = lambda x: x['score'], reverse = True)
+	return {'res': 0, 'msg': 'Successful', 'JDs': recommendations}
 
 # readJD
 @api.route('/readJD', methods = ['POST'])
