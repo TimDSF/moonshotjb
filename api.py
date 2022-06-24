@@ -536,7 +536,10 @@ def updateJD():
 	data.pop('tag[]', None)
 	data['tags'] = request.form.getlist('tag[]')
 	
-	data['workAuth'] = True if data['workAuth'] == 'true' else False	
+	if 'workAuth' in data:
+		data['workAuth'] = True if data['workAuth'] == 'true' else False
+	else:
+		data['workAuth'] = False
 
 	if 'jdid' in data and data['jdid'] != "": # if the jb exists and need update
 		jdid = data.pop('jdid')
