@@ -601,7 +601,18 @@ def removeJD():
 		if JD['userid'] != userid: # user doesn't own the jb
 			return {'res':4, 'msg': 'Permission Denied: User does not own this JD'}
 		else:
-			db.child('JDs').remove(jdid)
+			appids = db.child('JDs').child(jdid).child('applications').get().val()
+			db.child('JDs').child(jdid).remove()
+
+			for appid in appids:
+				db.child('applications').child(appid).remove()
+
+				userid = appid[:-(len(jdid)+1)]
+				apps = db.child('applicants').child(userid).child('applications').get().val()
+				if appid in apps:
+					apps.remove(appid)
+				db.child('applicants').child(userid).child('applications').set(apps)
+
 	else:
 		return {'res': 5, 'msg': 'JD Not Exist'}
 
