@@ -585,7 +585,7 @@ def updateJD():
 	if not _tags:
 		_tags = []
 	_tags = set(_tags)
-	tags = list(set(tags) & _tags)
+	tags = list(set(tags) | _tags)
 	db.child('JDs').child(jdid).child('tags').set(tags)
 
 	return {'res': 0, 'msg': 'Successful'}
