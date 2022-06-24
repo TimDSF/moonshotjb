@@ -581,7 +581,14 @@ def updateJD():
 	for idx, tmp in enumerate(skills):
 		tags[idx] = tmp['name']
 
-	return {'res': 0, 'msg': 'Successful', 'tags': tags}
+	_tags = db.child('JDs').child(jdid).child('tags').get().val()
+	if not _tags:
+		_tags = []
+	_tags = set(_tags)
+	tags = list(tags & _tags)
+	db.child('JDs').child(jdid).child('tags').set(tags)
+
+	return {'res': 0, 'msg': 'Successful'}
 
 # removeJD
 @api.route('/removeJD', methods = ['POST'])
