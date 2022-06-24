@@ -604,6 +604,11 @@ def removeJD():
 			appids = db.child('JDs').child(jdid).child('applications').get().val()
 			db.child('JDs').child(jdid).remove()
 
+			JDs = db.child('recruiters').child(userid).child('JDs').get().val()
+			if jdid in JDs:
+				JDs.remove(jdid)
+			db.child('recruiters').child(userid).child('JDs').set(JDs)
+
 			for appid in appids:
 				db.child('applications').child(appid).remove()
 
@@ -613,10 +618,11 @@ def removeJD():
 					apps.remove(appid)
 				db.child('applicants').child(userid).child('applications').set(apps)
 
+
 	else:
 		return {'res': 5, 'msg': 'JD Not Exist'}
 
-	return {'res': 0, 'msg': 'Successful', 'tags': tags}
+	return {'res': 0, 'msg': 'Successful'}
 
 
 # submitApplication
