@@ -616,15 +616,15 @@ def removeJD():
 				JDs.remove(jdid)
 			db.child('recruiters').child(userid).child('JDs').set(JDs)
 
-			for appid in appids:
-				db.child('applications').child(appid).remove()
+			if appids:
+				for appid in appids:
+					db.child('applications').child(appid).remove()
 
-				userid = appid[:-(len(jdid)+1)]
-				apps = db.child('applicants').child(userid).child('applications').get().val()
-				if appid in apps:
-					apps.remove(appid)
-				db.child('applicants').child(userid).child('applications').set(apps)
-
+					userid = appid[:-(len(jdid)+1)]
+					apps = db.child('applicants').child(userid).child('applications').get().val()
+					if appid in apps:
+						apps.remove(appid)
+					db.child('applicants').child(userid).child('applications').set(apps)
 
 	else:
 		return {'res': 5, 'msg': 'JD Not Exist'}
