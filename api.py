@@ -725,7 +725,7 @@ def updateApplication():
 			return {'res': 4, 'msg': 'Permission Deinied'}
 	else:
 		apps = db.child('applicants').child(userid).child('applications').get().val()
-		if status != 'pending' or not apps or appid not in apps:
+		if app['status'] != 'pending' or status not in ['withdrawn'] or not apps or appid not in apps:
 			return {'res': 4, 'msg': 'Permission Deinied'}
 
 	db.child('applications').child(appid).child('status').set(status)
