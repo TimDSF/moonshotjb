@@ -583,6 +583,30 @@ def updateJD():
 
 	return {'res': 0, 'msg': 'Successful', 'tags': tags}
 
+# removeJD
+@api.route('/removeJD', methods = ['POST'])
+def removeJD():
+	data = request.form.to_dict()
+	userid = data['userid']
+	token = data.pop('token')
+
+	res = login(userid, token, ['recruiters'])
+	if res['res']:
+		return res
+
+	jdid = data.pop('jdid')
+
+	JD = db.child('JDs').child(jdid).get().val()
+	if JD:
+		if JD['userid'] != userid: # user doesn't own the jb
+			return {'res':4, 'msg': 'Permission Denied: User does not own this JD'}
+		else:
+			db.child('JDs').remove(jdid)
+	else:
+		return {'res': 5, 'msg': 'JD Not Exist'}
+
+	return {'res': 0, 'msg': 'Successful', 'tags': tags}
+
 
 # submitApplication
 @api.route('/submitApplication', methods = ['POST'])
