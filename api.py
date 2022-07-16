@@ -49,7 +49,7 @@ def login(userid, token, allowed_category):
 def test():
     return '''
     <h1> Successful </h1>
-    <p> @ River, Tim, Victor, Frank </p>
+    <p> @ River, Victor, Tim, Eric L, Eric N, Peter, Frank </p>
     <p> !! Special thanks to Daniel </p>
     <p> &copy; MoonShot Job Board 2022 </p>
     '''
@@ -182,19 +182,13 @@ def updateApp():
 	data.pop('tag[]', None)
 	data['tags'] = request.form.getlist('tag[]')
 
-	data['workAuth'] = True if data['workAuth'] == 'true' else False
+	data['workAuth'] = {
+		'us': True if data.pop('workAuth_us', None) == 'true' else False,
+		'cn': True if data.pop('workAuth_cn', None) == 'true' else False
+	}
 	data['contacts'] = {
 		'number': data.pop('number', None),
-		'wxid': data.pop('wxid', None),
 		'email': data.pop('email', None)
-	}
-	data['education'] = {
-		'college': data.pop('college', None),
-		'degree': data.pop('degree', None)
-	}
-	data['experience'] = {
-		'yearsExp': int(data.pop('yearsExp', None)),
-		'numsEmp': int(data.pop('numsEmp', None))
 	}
 	data['externalLinks'] = {
 		'LinkedIn': data.pop('LinkedIn', None),
@@ -346,10 +340,12 @@ def updateRec():
 		'phone': data.pop('phone', None),
 		'email': data.pop('email', None)
 	}
-	data['companyDescription'] = {
-		'description': data.pop('description', None),
-		'background': data.pop('background', None),
-		'financing': data.pop('financing', None),
+	data['description'] = {
+		'introduction': data.pop('introduction', None),
+		'founder': data.pop('founder', None),
+		'established': data.pop('established', None),
+		'round': data.pop('round', None),
+		'investor': data.pop('investor', None),
 	}
 
 	db.child('recruiters').child(userid).update(data)
@@ -431,9 +427,9 @@ def readRec():
 	else:
 		return {'res': 5, 'msg': 'Target Not Found'}
 
-# getRecommendationJD
-@api.route('/getRecommendationJD', methods = ['POST'])
-def getRecommendationJD():
+# getRecommendedJD
+@api.route('/getRecommendedJD', methods = ['POST'])
+def getRecommendedJD():
 	data = request.form.to_dict()
 	userid = data.pop('userid')
 	token = data.pop('token')
@@ -750,4 +746,4 @@ def updateApplication():
     
 
 if __name__ == '__main__':
-	api.run(port = 5000, host = '0.0.0.0')
+	api.run(port = 8888, host = '0.0.0.0')
