@@ -477,6 +477,14 @@ def getRecommendedJD():
 		else:
 			JDs[jdid]['applications'] = 0
 
+		#filtering
+		filter_list = ['location', 'title']
+		for fl in filter_list:
+			tmp_val = data[fl]
+			
+			if (JDs[jdid][fl] is not None) and (tmp_val in JDs[jdid][fl]):
+				JDs[jdid]['score'] += 3
+
 	recommendations = sorted(list(JDs.values()), key = lambda x: x['score'], reverse = True)
 	return {'res': res['res'], 'msg': 'Successful', 'JDs': recommendations}
 
@@ -746,4 +754,4 @@ def updateApplication():
     
 
 if __name__ == '__main__':
-	api.run(port = 8888, host = '0.0.0.0')
+	api.run(port = 5000, host = '0.0.0.0')

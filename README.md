@@ -1,7 +1,10 @@
-# moonshotdb
+# MoonShotDB
 Moonshot Database for Applicants and Recruiters
 
-# How to use
+# API Document
+https://docs.google.com/document/d/1SR5ekSsrnoSeu_Rj5dn70GnU_ulCazomqSZbY74wV4E/edit?usp=sharing
+
+# How to Use on AWS
 To start a new screen and run the flask app:
 ```
 $ screen
