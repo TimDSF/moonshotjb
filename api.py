@@ -49,7 +49,7 @@ def login(userid, token, allowed_category):
 def test():
     return '''
     <h1> Successful </h1>
-    <p> @ River, Victor, Tim, Eric L, Eric N, Peter, Frank </p>
+    <p> @ River, Victor, Eric N, Tim, Eric L, Peter, Frank </p>
     <p> !! Special thanks to Daniel </p>
     <p> &copy; MoonShot Job Board 2022 </p>
     '''
