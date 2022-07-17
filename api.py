@@ -417,6 +417,11 @@ def readRec():
 			if JD and JD['status']['shown']:
 				JD.pop('userid')
 				JD['jdid'] = jdid
+				if userid != targetid:
+					if 'applications' in JD:
+						JD['applications'] = len(JD['applications'])
+					else:
+						JD['applications'] = 0
 				recruiter['JDs'][idx] = JD
 			else:
 				dels.append(idx)
@@ -754,4 +759,4 @@ def updateApplication():
     
 
 if __name__ == '__main__':
-	api.run(port = 5000, host = '0.0.0.0')
+	api.run(port = 8888, host = '0.0.0.0')
