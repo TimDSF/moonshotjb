@@ -411,22 +411,38 @@ def readRec():
 		if 'JDs' not in recruiter:
 			recruiter['JDs'] = []
 
-		dels = []
-		for idx, jdid in enumerate(recruiter['JDs']):
-			JD = db.child('JDs').child(jdid).get().val()
-			if JD and JD['status']['shown']:
+		if userid == targetid:
+			for idx, jdid in enumerate(recruiter['JDs']):
+				JD = db.child('JDs').child(jdid).get().val()
 				JD.pop('userid')
 				JD['jdid'] = jdid
-				if userid != targetid:
+
+				if 'applications' not in JD:
+					JD['applications'] = []
+
+				for idx, appid in enumerate(JD['applications']):
+					app = db.child('applications').child(appid).get().val()
+					app.pop('jdid')
+					app['appid'] = appid
+					JD['applications'][idx] = app
+				
+				recruiter['JDs'][idx] = JD
+		else:
+			dels = []
+			for idx, jdid in enumerate(recruiter['JDs']):
+				JD = db.child('JDs').child(jdid).get().val()
+				if JD and JD['status']['shown']:
+					JD.pop('userid')
+					JD['jdid'] = jdid
+				
 					if 'applications' in JD:
 						JD['applications'] = len(JD['applications'])
 					else:
 						JD['applications'] = 0
-				recruiter['JDs'][idx] = JD
-			else:
-				dels.append(idx)
+				else:
+					dels.append(idx)
 
-		recruiter['JDs'] = [recruiter['JDs'][idx] for idx in range(len(recruiter['JDs'])) if idx not in dels]
+			recruiter['JDs'] = [recruiter['JDs'][idx] for idx in range(len(recruiter['JDs'])) if idx not in dels]
 
 		return {'res': 0, 'msg': 'Successful', 'recruiter': recruiter}
 	else:
@@ -439,7 +455,7 @@ def getRecommendedJD():
 	userid = data.pop('userid')
 	token = data.pop('token')
 
-	guest = userid == '' and token == ''
+	guest = token == ''
 	if not guest:
 		res = login(userid, token, ['applicants'])
 
@@ -511,6 +527,12 @@ def readJD():
 		if JD['userid'] == userid:
 			if 'applications' not in JD:
 				JD['applications'] = []
+
+			for idx, appid in enumerate(JD['applications']):
+				app = db.child('applications').child(appid).get().val()
+				app.pop('jdid')
+				app['appid'] = appid
+				JD['applications'][idx] = app
 		elif JD['status']['shown']:
 			if 'applications' not in JD:
 				JD['applications'] = 0
